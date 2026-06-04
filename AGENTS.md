@@ -38,9 +38,11 @@ Shared providers across all AutomatedEmpires apps. Do not introduce alternates w
 | Payments | Stripe Connect |
 | Media | Cloudinary |
 | Observability | PostHog + Sentry |
-| Icons | Streamline (single icon system) |
+| Icons | Streamline — formal style (Core / Sharp / Ultimate); specific style TBD (founder to pick) |
 | Language | TypeScript end-to-end |
 | Surfaces | Web: Next.js · Mobile: Expo / React Native |
+
+**Icon policy (per-app):** BidSpace and LogLoads use a more formal Streamline style (specific style still to be chosen by the founder); Sweepza and Explore&Earn use Streamline Freehand (Pro). One Streamline style per app, applied consistently.
 
 ## 5 · Repo layout
 - `apps/` — web (Next.js), mobile (Expo), api (later)
@@ -57,7 +59,7 @@ Shared providers across all AutomatedEmpires apps. Do not introduce alternates w
 
 ## 7 · GitHub management
 - Work on lane/feature branches → small PRs → review → merge. Never push straight to `main`.
-- CI (`.github/workflows/ci.yml`) runs typecheck + lint + build on every PR; keep it green. (Pending: the workflow file still needs to be added once the GitHub app has `workflows` permission.)
+- CI (`.github/workflows/ci.yml`) runs typecheck + lint + build on every PR; keep it green.
 - Use phase/area labels consistently and tie PRs to issues.
 - Notion ↔ GitHub sync mirrors issues/PRs into Notion for lane agents (see the tracking issue to stand this up).
 
