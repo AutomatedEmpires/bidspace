@@ -48,3 +48,10 @@ Secrets **Doppler** · Hosting **Vercel** · DB **Supabase Postgres** (+PostGIS 
 - Add the CI workflow file (needs `workflows` permission), then keep CI green.
 - Stand up the Notion ↔ GitHub issue/PR sync so lane agents see work in Notion.
 - When E&E's Clerk/Mapbox migration lands, confirm all three apps share identical auth/map provider config.
+
+---
+
+## Addendum — 2026-06-04 (cross-app provider lock)
+- **Clerk (auth) + Mapbox (maps) are now formally LOCKED as the cross-app standard** across E&E, BidSpace, and Sweepza. BidSpace already complies (D013 Clerk, D014 Mapbox) — **no change to BidSpace providers.**
+- **Runtime format unified:** `engines.node` changed from `>=24.16.0` to exact **`24.16.0`** to match E&E + Sweepza. Node / pnpm / TS were already aligned.
+- **E&E is executing its migration** off Supabase Auth + Azure Maps → Clerk + Mapbox (tracked in E&E issue #91). When it lands, all three apps will share identical auth/map provider config — the goal stated above.
