@@ -1,0 +1,33 @@
+-- 0002_enums.sql — controlled lifecycle and type values
+
+create type user_status as enum ('invited','active','suspended','deleted');
+create type organization_type as enum ('host','bidder','venue_owner','sponsor','service_provider','network_operator','multi');
+create type organization_status as enum ('draft','pending_verification','active','restricted','suspended','archived');
+create type verification_status as enum ('not_started','pending','verified','rejected','expired','revoked');
+create type membership_status as enum ('active','invited','suspended','removed');
+create type organization_member_role as enum ('owner','admin','manager','member','viewer');
+create type marketplace_role_type as enum ('host','bidder','venue_owner','sponsor','service_provider','network_operator');
+create type role_profile_status as enum ('draft','active','hidden','archived');
+create type venue_type as enum ('fairgrounds','market','mall','stadium','campus','parking_lot','hall','outdoor','church','school','other');
+create type venue_status as enum ('draft','active','hidden','archived');
+create type zone_type as enum ('entrance','main_walkway','food_court','premium_corner','indoor_hall','outdoor_row','stage_area','parking_lot','vendor_row','sponsor_area','service_area','back_of_house','low_traffic');
+create type event_type as enum ('fair','festival','market','trade_show','expo','rodeo','concert','convention','community','popup','sporting','other');
+create type event_status as enum ('draft','published','receiving_bids','closed','completed','cancelled','archived');
+create type collection_type as enum ('regional','circuit','category','seasonal','network','sponsorship');
+create type collection_status as enum ('draft','published','featured','archived');
+create type commerce_layer as enum ('physical_sales','lead_generation','brand_exposure','experience_activation','operational_service');
+create type pricing_mode as enum ('fixed','minimum_bid','competitive_bid','hybrid');
+create type opportunity_status as enum ('draft','published','receiving_bids','closed','filled','completed','cancelled','archived');
+create type inventory_unit_type as enum ('vendor_space','sponsor_asset','service_slot','advertising_placement','temporary_real_estate');
+create type inventory_unit_status as enum ('draft','available','receiving_bids','shortlisted','reserved','payment_pending','booked','completed','cancelled','archived');
+create type bid_status as enum ('draft','submitted','viewed','shortlisted','countered','accepted','rejected','waitlisted','expired','withdrawn','payment_pending','paid','booked','completed','reviewed');
+create type booking_status as enum ('pending_payment','confirmed','upcoming','in_progress','completed','cancelled','disputed','reviewed');
+create type payment_status as enum ('pending','authorized','paid','failed','refunded','partially_refunded','disputed','paid_out');
+create type review_status as enum ('requested','submitted','flagged','published','hidden');
+create type verification_type as enum ('identity','business','host','bidder','venue','insurance','license','attendance','network');
+create type verification_subject_type as enum ('organization','user','role_profile','venue','opportunity','inventory_unit','document');
+create type document_type as enum ('insurance','business_license','food_permit','fire_inspection','venue_proof','event_proof','attendance_proof','image','floorplan','contract','other');
+create type document_status as enum ('uploaded','pending','verified','rejected','expired');
+create type message_thread_context as enum ('bid','booking','opportunity','support');
+create type performance_metric_source as enum ('review','host_report','bidder_report','system');
+create type admin_action_type as enum ('verify','reject_document','suspend','hide_listing','resolve_dispute','issue_refund','flag');
