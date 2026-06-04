@@ -15,9 +15,12 @@ export async function createVenue(db: BidspaceClient, input: VenueCreate): Promi
       organization_id: v.organizationId,
       name: v.name,
       venue_type: v.venueType,
-      address_line1: v.addressLine1,
+      address_line_1: v.addressLine1,
+      address_line_2: v.addressLine2 ?? null,
       city: v.city,
       state: v.state,
+      postal_code: v.postalCode ?? null,
+      country: v.country,
       location: toGeoPoint(v.latitude, v.longitude),
     })
     .select("*")

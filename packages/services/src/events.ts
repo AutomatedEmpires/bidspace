@@ -1,29 +1,24 @@
 import type { BidspaceClient, EventRow } from "@bidspace/db";
+import { eventCreateSchema, type EventCreate, type EventStatus } from "@bidspace/core";
 import { NotFoundError, ValidationError, fromDbError } from "./errors.js";
 
-export interface EventCreateInput {
-  organizationId: string;
-  venueId?: string;
-  name: string;
-  startsAt?: string;
-  endsAt?: string;
-}
-
-export async function createEvent(db: BidspaceClient, input: EventCreateInput): Promise<EventRow> {
-  if (!input.name || !input.name.trim()) {
-    throw new ValidationError("Event name is required");
+export async function createEvent(db: BidspaceClient, input: EventCreate): Promise<EventRow> {
+  const parsed = eventCreateSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ValidationError("Invalid event input", parsed.error.flatten());
   }
-  if (input.startsAt && input.endsAt && input.endsAt < input.startsAt) {
-    throw new ValidationError("Event endsAt must be on or after startsAt");
-  }
+  const e = parsed.data;
   const { data, error } = await db
     .from("events")
     .insert({
-      organization_id: input.organizationId,
-      venue_id: input.venueId ?? null,
-      name: input.name.trim(),
-      starts_at: input.startsAt ?? null,
-      ends_at: input.endsAt ?? null,
+      organization_id: e.organizationId,
+      venue_id: e.venueId ?? null,
+      name: e.name.trim(),
+      event_type: e.eventType,
+      starts_at: e.startsAt,
+      ends_at: e.endsAt,
+      timezone: e.timezone ?? null,
+      status: "draft" satisfies EventStatus,
     })
     .select("*")
     .single();

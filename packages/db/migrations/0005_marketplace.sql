@@ -1,4 +1,5 @@
 -- 0005_marketplace.sql — opportunities, inventory units
+-- Money is stored in integer cents (bigint) per D020 (see docs/DECISIONS.md).
 
 create table opportunities (
   id uuid primary key default gen_random_uuid(),
@@ -18,7 +19,7 @@ create table opportunities (
   estimated_attendance integer,
   traffic_confidence numeric,
   category_tags text[] not null default '{}',
-  minimum_bid numeric,
+  minimum_bid_cents bigint,
   bid_deadline timestamptz,
   requirements jsonb not null default '{}',
   image_urls jsonb not null default '[]',
@@ -63,9 +64,9 @@ create table inventory_units (
   required_documents text[] not null default '{}',
   category_restrictions text[] not null default '{}',
   outcome_tags text[] not null default '{}',
-  minimum_bid numeric,
-  buy_now_price numeric,
-  reserve_price numeric,
+  minimum_bid_cents bigint,
+  buy_now_price_cents bigint,
+  reserve_price_cents bigint,
   visibility_score numeric,
   traffic_score numeric,
   notes text,
