@@ -13,6 +13,7 @@
   "dependencies": {
     "@bidspace/core": "workspace:*",
     "@bidspace/db": "workspace:*",
+    "@bidspace/services": "workspace:*",
     "@clerk/nextjs": "^7.4.3",
     "next": "16.2.7",
     "react": "19.2.4",
