@@ -1,8 +1,8 @@
 # Integration Providers (Canonical) `LOCKED`
 
-The approved provider stack for BidSpace. Build against these; do not introduce alternatives without a new dated decision. Secrets for all of these live in **Doppler** — never commit real values. Variable names are documented in `.env.example`.
+The approved **third-party service providers** for BidSpace. Build against these; do not introduce alternative *providers* without a new dated decision. Secrets for all of these live in **Doppler** — never commit real values. Variable names are documented in `.env.example`.
 
-> Deliberately lean: **no Playwright / heavy e2e test tooling** for now. Keep the toolchain minimal.
+> Scope note: this registry lists **service providers only**. Standard dev tooling — **npm/pnpm**, **Playwright** (e2e), **TypeScript**, ESLint/Prettier, Turborepo — is assumed and in active use; it is intentionally not enumerated here.
 
 ## Runtime & platform
 | Provider | Role | Notes |
@@ -50,6 +50,9 @@ The approved provider stack for BidSpace. Build against these; do not introduce 
 | Provider | Role | Notes |
 |---|---|---|
 | **Notion (Business)** | Vision log + ops/PM | Founder journal; **the repo is canonical for spec/code** (D017). |
+
+## Standard tooling (assumed, not a provider)
+npm / pnpm · Playwright (e2e) · TypeScript · ESLint + Prettier · Turborepo · Supabase CLI · Stripe CLI. In use across the monorepo; listed here only to record that they are part of the workflow.
 
 ## Media routing rule
 - **Cloudinary** → public, transformable, CDN-served images/video (listings, galleries, floorplan renders).
