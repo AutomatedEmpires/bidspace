@@ -2,6 +2,8 @@ import type {
   UserStatus,
   OrganizationType,
   OrganizationStatus,
+  OrganizationMemberRole,
+  MembershipStatus,
   MarketplaceRoleType,
   VerificationStatus,
   CommerceLayer,
@@ -50,6 +52,17 @@ export interface RoleProfileRow {
   slug: string | null;
   bio: string | null;
   category_tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationMembershipRow {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrganizationMemberRole;
+  status: MembershipStatus;
+  invited_by_user_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -162,6 +175,7 @@ export interface ReviewRow {
 export interface BidspaceTables {
   users: UserRow;
   organizations: OrganizationRow;
+  organization_memberships: OrganizationMembershipRow;
   role_profiles: RoleProfileRow;
   venues: VenueRow;
   events: EventRow;

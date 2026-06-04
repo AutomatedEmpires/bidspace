@@ -135,5 +135,11 @@ export const VERIFICATION_STATUS = [
 ] as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUS)[number];
 
+export const MEMBERSHIP_STATUS = ["active", "invited", "suspended", "removed"] as const;
+export type MembershipStatus = (typeof MEMBERSHIP_STATUS)[number];
+
+export const ORGANIZATION_MEMBER_ROLE = ["owner", "admin", "manager", "member", "viewer"] as const;
+export type OrganizationMemberRole = (typeof ORGANIZATION_MEMBER_ROLE)[number];
+
 export const REVIEW_STATUS = ["requested", "submitted", "flagged", "published", "hidden"] as const;
 export type ReviewStatus = (typeof REVIEW_STATUS)[number];

@@ -1,0 +1,30 @@
+{
+  "name": "@bidspace/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --import tsx ./lib/**/*.test.ts"
+  },
+  "dependencies": {
+    "@bidspace/core": "workspace:*",
+    "@bidspace/db": "workspace:*",
+    "@clerk/nextjs": "^7.4.3",
+    "next": "16.2.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.7",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
+  }
+}

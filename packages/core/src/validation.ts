@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  ORGANIZATION_TYPE,
-  MARKETPLACE_ROLE_TYPE,
-  PRICING_MODE,
-  COMMERCE_LAYER,
-  INVENTORY_UNIT_TYPE,
-} from "./enums.js";
+import { ORGANIZATION_TYPE, MARKETPLACE_ROLE_TYPE, PRICING_MODE, COMMERCE_LAYER, INVENTORY_UNIT_TYPE } from "./enums";
 
 const slug = z
   .string()
