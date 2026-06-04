@@ -4,7 +4,7 @@ import type {
   PaymentStatus,
   InventoryUnitStatus,
   OpportunityStatus,
-} from "./enums.js";
+} from "./enums";
 
 export type TransitionMap<S extends string> = Readonly<Record<S, readonly S[]>>;
 

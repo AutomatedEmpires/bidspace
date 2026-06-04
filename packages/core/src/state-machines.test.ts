@@ -7,7 +7,7 @@ import {
   bidStatusTransitions,
   paymentStatusTransitions,
   opportunityStatusTransitions,
-} from "./state-machines.js";
+} from "./state-machines";
 
 test("bid: draft -> submitted is allowed", () => {
   assert.equal(canTransition(bidStatusTransitions, "draft", "submitted"), true);
