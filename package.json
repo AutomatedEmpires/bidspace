@@ -1,7 +1,10 @@
 {
   "name": "bidspace",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=24.16.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -9,7 +12,7 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
-    "typescript": "^5.4.0"
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
   }
 }
