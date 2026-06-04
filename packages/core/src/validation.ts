@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { ORGANIZATION_TYPE, MARKETPLACE_ROLE_TYPE, PRICING_MODE, COMMERCE_LAYER, INVENTORY_UNIT_TYPE } from "./enums";
+import {
+  ORGANIZATION_TYPE,
+  MARKETPLACE_ROLE_TYPE,
+  PRICING_MODE,
+  COMMERCE_LAYER,
+  INVENTORY_UNIT_TYPE,
+  VENUE_TYPE,
+  EVENT_TYPE,
+} from "./enums.js";
 
 const slug = z
   .string()
@@ -30,14 +38,36 @@ export type RoleProfileCreate = z.infer<typeof roleProfileCreateSchema>;
 export const venueCreateSchema = z.object({
   organizationId: z.string().uuid(),
   name: z.string().min(1),
-  venueType: z.string().min(1),
+  venueType: z.enum(VENUE_TYPE),
+  description: z.string().optional(),
   addressLine1: z.string().min(1),
+  addressLine2: z.string().optional(),
   city: z.string().min(1),
   state: z.string().min(1),
+  postalCode: z.string().optional(),
+  country: z.string().min(2).max(2).default("US"),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
 });
 export type VenueCreate = z.infer<typeof venueCreateSchema>;
+
+export const eventCreateSchema = z
+  .object({
+    organizationId: z.string().uuid(),
+    venueId: z.string().uuid().optional(),
+    name: z.string().min(1),
+    eventType: z.enum(EVENT_TYPE),
+    description: z.string().optional(),
+    startsAt: z.string().datetime(),
+    endsAt: z.string().datetime(),
+    timezone: z.string().optional(),
+    estimatedAttendance: z.number().int().nonnegative().optional(),
+  })
+  .refine((v) => v.endsAt >= v.startsAt, {
+    message: "endsAt must be on or after startsAt",
+    path: ["endsAt"],
+  });
+export type EventCreate = z.infer<typeof eventCreateSchema>;
 
 export const opportunityCreateSchema = z.object({
   organizationId: z.string().uuid(),
@@ -60,6 +90,8 @@ export const inventoryUnitCreateSchema = z.object({
   availabilityEnd: z.string().datetime(),
   pricingMode: z.enum(PRICING_MODE).default("hybrid"),
   minimumBidCents: z.number().int().nonnegative().optional(),
+  buyNowPriceCents: z.number().int().nonnegative().optional(),
+  reservePriceCents: z.number().int().nonnegative().optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
 });
