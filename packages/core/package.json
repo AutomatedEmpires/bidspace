@@ -1,5 +1,5 @@
 {
-  "name": "@bidspace/db",
+  "name": "@bidspace/core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,14 +7,13 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "gen:types": "supabase gen types typescript --local > src/generated.types.ts"
+    "test": "node --test --import tsx ./src/**/*.test.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
-    "@bidspace/core": "workspace:*"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "supabase": "^1.191.3",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.4"
   }
 }
