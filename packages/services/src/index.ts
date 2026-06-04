@@ -6,3 +6,5 @@ export * from "./opportunities.js";
 export * from "./inventory-units.js";
 export * from "./bidding.js";
 export * from "./discovery.js";
+export * from "./payments.js";
+export * from "./booking.js";
