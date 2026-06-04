@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { MARKETPLACE_ROLE_TYPE } from "@bidspace/core";
 import Link from "next/link";
 
+const DEFAULT_ORG_NAME = "BidSpace Organization";
+
 export default async function OnboardingPage({
   searchParams,
 }: {
@@ -32,7 +34,7 @@ export default async function OnboardingPage({
       <p>Pick one or more marketplace roles for your active organization profile.</p>
       {rolesRequired ? <p style={{ color: "#b91c1c" }}>Select at least one role.</p> : null}
       <form action="/onboarding/complete" method="post">
-        <input type="hidden" name="organizationName" value="BidSpace Organization" />
+        <input type="hidden" name="organizationName" value={DEFAULT_ORG_NAME} />
         <fieldset style={{ border: "1px solid #ddd", padding: 16, marginBottom: 16 }}>
           <legend>Role profiles</legend>
           {MARKETPLACE_ROLE_TYPE.map((role) => (

@@ -1,7 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getRequiredEnv } from "@/lib/env";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
+// Clerk route matcher uses regex-like route patterns; `(.*)` protects nested segments.
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
@@ -20,8 +22,8 @@ export default clerkMiddleware(async (auth, req) => {
     },
   });
 }, {
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-  secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: getRequiredEnv("CLERK_PUBLISHABLE_KEY"),
+  secretKey: getRequiredEnv("CLERK_SECRET_KEY"),
 });
 
 export const config = {

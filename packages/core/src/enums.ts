@@ -138,6 +138,7 @@ export type VerificationStatus = (typeof VERIFICATION_STATUS)[number];
 export const MEMBERSHIP_STATUS = ["active", "invited", "suspended", "removed"] as const;
 export type MembershipStatus = (typeof MEMBERSHIP_STATUS)[number];
 
+// Permission hierarchy: owner > admin > manager > member > viewer.
 export const ORGANIZATION_MEMBER_ROLE = ["owner", "admin", "manager", "member", "viewer"] as const;
 export type OrganizationMemberRole = (typeof ORGANIZATION_MEMBER_ROLE)[number];
 

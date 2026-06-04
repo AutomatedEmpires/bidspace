@@ -4,6 +4,19 @@ import { redirect } from "next/navigation";
 import { createServerBidspaceClient } from "@/lib/bidspace-server";
 import { normalizeMembershipRole } from "@/lib/permissions";
 
+function getUserDisplayName(user: NonNullable<Awaited<ReturnType<typeof currentUser>>>, email: string): string {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || email;
+}
+
+function getBidspaceOrganizationId(organization: { publicMetadata?: unknown }): string | null {
+  const metadata =
+    organization.publicMetadata && typeof organization.publicMetadata === "object"
+      ? (organization.publicMetadata as Record<string, unknown>)
+      : null;
+  const value = metadata?.bidspaceOrganizationId;
+  return typeof value === "string" ? value : null;
+}
+
 async function syncUserRecord() {
   const user = await currentUser();
   if (!user) {
@@ -15,7 +28,7 @@ async function syncUserRecord() {
     throw new Error("Authenticated user must have an email address");
   }
 
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || email;
+  const fullName = getUserDisplayName(user, email);
   const db = createServerBidspaceClient();
 
   const { data: existing } = await db.from("users").select("id").eq("auth_provider_id", user.id).maybeSingle();
@@ -46,8 +59,7 @@ async function ensureOrganizationRecord(clerkOrgId: string, userId: string, fall
   const org = await clerk.organizations.getOrganization({ organizationId: clerkOrgId });
 
   const db = createServerBidspaceClient();
-  const existingDbOrgId =
-    typeof org.publicMetadata?.bidspaceOrganizationId === "string" ? org.publicMetadata.bidspaceOrganizationId : null;
+  const existingDbOrgId = getBidspaceOrganizationId(org);
 
   if (existingDbOrgId) {
     return { dbOrganizationId: existingDbOrgId, organizationName: org.name || fallbackName, org };
@@ -119,7 +131,7 @@ export async function POST(request: Request) {
   const { dbOrganizationId, organizationName } = await ensureOrganizationRecord(authState.orgId, dbUserId, fallbackName);
 
   const db = createServerBidspaceClient();
-  await db.from("organization_memberships").upsert(
+  const { error: membershipError } = await db.from("organization_memberships").upsert(
     {
       organization_id: dbOrganizationId,
       user_id: dbUserId,
@@ -128,6 +140,9 @@ export async function POST(request: Request) {
     },
     { onConflict: "organization_id,user_id" },
   );
+  if (membershipError) {
+    throw membershipError;
+  }
 
   const profileRows = selectedRoles.map((roleType) =>
     roleProfileCreateSchema.parse({
@@ -138,18 +153,19 @@ export async function POST(request: Request) {
     }),
   );
 
-  for (const profile of profileRows) {
-    await db.from("role_profiles").upsert(
-      {
-        organization_id: profile.organizationId,
-        role_type: profile.roleType,
-        display_name: profile.displayName,
-        slug: profile.slug ?? null,
-        bio: profile.bio ?? null,
-        category_tags: profile.categoryTags,
-      },
-      { onConflict: "organization_id,role_type" },
-    );
+  const { error: profileError } = await db.from("role_profiles").upsert(
+    profileRows.map((profile) => ({
+      organization_id: profile.organizationId,
+      role_type: profile.roleType,
+      display_name: profile.displayName,
+      slug: profile.slug ?? null,
+      bio: profile.bio ?? null,
+      category_tags: profile.categoryTags,
+    })),
+    { onConflict: "organization_id,role_type" },
+  );
+  if (profileError) {
+    throw profileError;
   }
 
   redirect("/dashboard");

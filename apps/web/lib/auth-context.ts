@@ -35,7 +35,7 @@ export async function getCurrentUserOrgContext() {
   const clerk = await clerkClient();
 
   const org = authState.orgId ? await clerk.organizations.getOrganization({ organizationId: authState.orgId }) : null;
-  const dbOrganizationId = typeof org?.publicMetadata?.bidspaceOrganizationId === "string" ? org.publicMetadata.bidspaceOrganizationId : null;
+  const dbOrganizationId = getBidspaceOrganizationId(org);
 
   const db = createServerBidspaceClient();
   const { data: dbUser } = await db.from("users").select("id").eq("auth_provider_id", user.id).maybeSingle();
@@ -59,4 +59,15 @@ export async function getCurrentUserOrgContext() {
     activeOrganizationRole: normalizeMembershipRole(authState.orgRole),
     roleProfiles: roles,
   };
+}
+
+function getBidspaceOrganizationId(
+  organization: { publicMetadata?: unknown } | null,
+): string | null {
+  const metadata =
+    organization?.publicMetadata && typeof organization.publicMetadata === "object"
+      ? (organization.publicMetadata as Record<string, unknown>)
+      : null;
+  const value = metadata?.bidspaceOrganizationId;
+  return typeof value === "string" ? value : null;
 }

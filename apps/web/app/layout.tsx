@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getRequiredEnv } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,8 +13,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkPublishableKey = getRequiredEnv("CLERK_PUBLISHABLE_KEY");
+
   return (
-    <ClerkProvider publishableKey={process.env.CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
       <html lang="en">
         <body>{children}</body>
       </html>
