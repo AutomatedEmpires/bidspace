@@ -1,4 +1,5 @@
 -- 0006_transactions.sql — bids, bid preferences, bookings, payments
+-- Money is stored in integer cents (bigint) per D020 (see docs/DECISIONS.md).
 
 create table bids (
   id uuid primary key default gen_random_uuid(),
@@ -6,7 +7,7 @@ create table bids (
   host_organization_id uuid references organizations(id),
   opportunity_id uuid not null references opportunities(id) on delete cascade,
   inventory_unit_id uuid references inventory_units(id),
-  amount numeric not null,
+  amount_cents bigint not null,
   status bid_status not null default 'draft',
   commerce_layer commerce_layer,
   intended_use text,
@@ -17,7 +18,7 @@ create table bids (
   notes text,
   attachments jsonb not null default '[]',
   expires_at timestamptz,
-  counter_amount numeric,
+  counter_amount_cents bigint,
   created_by_user_id uuid references users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -33,7 +34,7 @@ create table bid_preferences (
   bid_id uuid not null references bids(id) on delete cascade,
   inventory_unit_id uuid references inventory_units(id),
   rank integer not null,
-  amount numeric,
+  amount_cents bigint,
   criteria jsonb not null default '{}',
   created_at timestamptz not null default now()
 );
@@ -47,7 +48,7 @@ create table bookings (
   bidder_organization_id uuid not null references organizations(id),
   starts_at timestamptz not null,
   ends_at timestamptz not null,
-  price numeric not null,
+  price_cents bigint not null,
   status booking_status not null default 'pending_payment',
   contract_terms text,
   check_in_status text,
