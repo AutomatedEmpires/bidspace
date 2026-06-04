@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assertBidAcceptable } from "./bidding.js";
+import { assertBidAcceptable, visibleBidsFor } from "./bidding.js";
 import { ValidationError } from "./errors.js";
 
 test("accepts a valid bid at or above the minimum", () => {
@@ -32,4 +32,20 @@ test("rejects a non-positive or non-integer bid", () => {
     () => assertBidAcceptable({ opportunityStatus: "receiving_bids", amountCents: 12.5, minimumBidCents: null }),
     ValidationError,
   );
+});
+
+const bids = [
+  { bidder_organization_id: "org-a", amount_cents: 9000 },
+  { bidder_organization_id: "org-b", amount_cents: 8000 },
+];
+
+test("sealed bids: a bidder only sees their own bids (D019)", () => {
+  const visible = visibleBidsFor(bids, { organizationId: "org-a", isHost: false });
+  assert.equal(visible.length, 1);
+  assert.equal(visible[0]?.bidder_organization_id, "org-a");
+});
+
+test("sealed bids: the host sees every bid", () => {
+  const visible = visibleBidsFor(bids, { organizationId: "host-org", isHost: true });
+  assert.equal(visible.length, 2);
 });
