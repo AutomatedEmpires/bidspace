@@ -17,11 +17,14 @@ Canonical, deduplicated decision log. Supersedes all earlier brainstorming in th
 ## Technical (locked this session)
 - **D011 — TypeScript end-to-end.** Matches Explore&Earn; complexity is domain logic, not infra. `LOCKED`
 - **D012 — Supabase Postgres + PostGIS is the system of record.** Replaces the Azure lean. `LOCKED`
-- **D013 — Clerk for authentication** (multi-role accounts, orgs, team members). `LOCKED`
-- **D014 — Mapbox for the spatial layer** (custom layers/floorplans). `LOCKED`
+- **D013 — Clerk for authentication** (multi-role accounts, orgs, team members). `LOCKED` · *Cross-app standard.*
+- **D014 — Mapbox for the spatial layer** (custom layers/floorplans). `LOCKED` · *Cross-app standard.*
 - **D015 — Stripe Connect for payments.** No charge at bid time; charge after host acceptance. `LOCKED`
 - **D016 — Monorepo via pnpm + Turborepo.** `LOCKED`
-- **D017 — This repository is the canonical spec.** Notion journal is the vision log; repo wins on conflict. `LOCKED`
+- **D017 — This repository is the canonical _implementation_ spec.** Notion journal is the vision log. `LOCKED` · **Partially superseded by D018** (the blanket "repo wins on conflict" clause now applies to implementation conflicts only).
+
+## Cross-app alignment
+- **D018 — Source-of-truth split (2026-06-03).** Adopts the Explore&Earn doctrine across all AutomatedEmpires apps: **Notion holds product & vision truth; this repo holds implementation truth.** On a *product/vision* conflict, Notion decides; on an *implementation* conflict, this repo decides. Supersedes D017's blanket "repo wins." Also confirms the cross-app runtime + integration spine (Node 24.16.0, pnpm 10.12.4, Turborepo; Clerk auth, Mapbox maps, Supabase, Stripe, Doppler, Vercel, PostHog, Sentry, Cloudinary). `LOCKED`
 
 ## Open (must lock before/at relevant phase)
 - **O1 — Platform fee %** and who pays (host / bidder / split). *Before payments go live.*
