@@ -9,7 +9,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "test": "echo \"(no tests yet)\"",
+    "test": "turbo run test",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
