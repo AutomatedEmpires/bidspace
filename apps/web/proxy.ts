@@ -3,9 +3,8 @@ import { NextResponse } from "next/server";
 import { getRequiredEnv } from "@/lib/env";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
-// Clerk route matcher uses regex-like route patterns; `(.*)` protects nested segments.
 
-export default clerkMiddleware(async (auth, req) => {
+export const proxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
   }
