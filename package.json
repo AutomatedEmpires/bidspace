@@ -13,6 +13,7 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   }
