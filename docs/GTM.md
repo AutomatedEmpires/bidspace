@@ -16,4 +16,4 @@ Spokane + Coeur d'Alene + Boise corridor. Categories first: food trucks, farmers
 - Data loop: bids/bookings → pricing intelligence → better matches.
 
 ## Early monetization
-Free host onboarding for early partners; transaction fee on booking only; bidders free early. Featured placement + host subscription later. (Fee % = open decision O1.)
+Free host onboarding for early partners; transaction fee on booking only; bidders free early. Featured placement + host subscription later. **Platform fee = 10% seller-side commission, locked as D018** (`DEFAULT_PLATFORM_FEE_BPS = 1000`); O1 is resolved.
