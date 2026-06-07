@@ -1,0 +1,20 @@
+import { requireHostWorkspaceContext } from "@/lib/host-access";
+import { getHostSupplySnapshot, pretty } from "@/lib/host-supply";
+import { createVenueAction, updateVenueAction } from "../actions";
+import { EmptyState, StatusBadge, VenueTypeSelect } from "../_components/supply-ui";
+
+export default async function VenuesPage() {
+  const context = await requireHostWorkspaceContext();
+  const { venues, events, inventoryUnits } = await getHostSupplySnapshot(context.organizationId);
+
+  return (
+    <div className="bs-stack">
+      <section className="bs-hero"><p className="bs-eyebrow">Venues</p><h2>Geographic anchors for all host supply.</h2><p>Venues own the physical footprint. Events and units may attach to a venue, but inventory can still be managed without making events mandatory.</p></section>
+      <section className="bs-grid bs-grid-2">
+        <div className="bs-card bs-stack"><h3>Create venue</h3><form className="bs-form" action={createVenueAction}><div className="bs-form-grid"><label className="bs-field"><span>Name</span><input name="name" required /></label><label className="bs-field"><span>Venue type</span><VenueTypeSelect /></label><label className="bs-field"><span>Address line 1</span><input name="addressLine1" required /></label><label className="bs-field"><span>City</span><input name="city" required /></label><label className="bs-field"><span>State</span><input name="state" required /></label><label className="bs-field"><span>Country</span><input name="country" defaultValue="US" required /></label><label className="bs-field"><span>Latitude</span><input name="latitude" type="number" step="any" required /></label><label className="bs-field"><span>Longitude</span><input name="longitude" type="number" step="any" required /></label></div><label className="bs-field"><span>Description</span><textarea name="description" /></label><button className="bs-button" type="submit">Create venue</button></form></div>
+        <div className="bs-card bs-stack"><h3>Venue coverage</h3><p className="bs-muted">{venues.length} venues · {events.length} events · {inventoryUnits.filter((unit) => unit.venue_id).length} units explicitly mapped to venues.</p><div className="bs-callout bs-small"><strong>Operational cue</strong><p className="bs-muted">A venue can carry always-on inventory without an event. Use events only when timing/audience matters.</p></div></div>
+      </section>
+      <section className="bs-card bs-stack"><h3>Manage venues</h3>{venues.length ? <div className="bs-list">{venues.map((venue) => <div className="bs-item" key={venue.id}><div className="bs-row"><strong>{venue.name}</strong><StatusBadge status={venue.status ?? "draft"} /></div><p className="bs-muted bs-small">{pretty(venue.venue_type)} · {venue.city}, {venue.state}</p><form className="bs-form" action={updateVenueAction}><input type="hidden" name="id" value={venue.id} /><div className="bs-form-grid"><label className="bs-field"><span>Name</span><input name="name" defaultValue={venue.name} /></label><label className="bs-field"><span>Venue type</span><VenueTypeSelect defaultValue={venue.venue_type} /></label><label className="bs-field"><span>Status</span><select name="status" defaultValue={venue.status ?? "draft"}><option value="draft">Draft</option><option value="active">Active</option><option value="hidden">Hidden</option><option value="archived">Archived</option></select></label><label className="bs-field"><span>City</span><input name="city" defaultValue={venue.city} /></label><label className="bs-field"><span>State</span><input name="state" defaultValue={venue.state} /></label><label className="bs-field"><span>Address</span><input name="addressLine1" defaultValue={venue.address_line_1} /></label></div><label className="bs-field"><span>Description</span><textarea name="description" defaultValue={venue.description ?? ""} /></label><button className="bs-button-secondary" type="submit">Save venue</button></form></div>)}</div> : <EmptyState title="No venues yet" body="Create a venue to anchor units on the map." />}</section>
+    </div>
+  );
+}
