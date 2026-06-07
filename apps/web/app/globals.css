@@ -71,10 +71,34 @@ button {
   cursor: pointer;
 }
 
+ul {
+  padding-left: 20px;
+}
+
 .dashboard-shell {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 32px 0 56px;
+}
+
+.stack,
+.stack-lg,
+.grid,
+.card-grid {
+  display: grid;
+}
+
+.stack {
+  gap: 12px;
+}
+
+.stack-lg {
+  gap: 24px;
+}
+
+.grid,
+.card-grid {
+  gap: 16px;
 }
 
 .dashboard-header,
@@ -88,7 +112,7 @@ button {
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 4px;
 }
 
 .eyebrow {
@@ -122,12 +146,6 @@ h3 {
   color: var(--muted);
 }
 
-.grid,
-.card-grid {
-  display: grid;
-  gap: 16px;
-}
-
 .card-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
@@ -154,21 +172,18 @@ h3 {
 
 .notice {
   background: var(--panel-soft);
-  margin-bottom: 18px;
 }
 
 .error-box {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 8%, var(--panel));
-  margin-bottom: 18px;
 }
 
 .success-box {
   border-color: color-mix(in srgb, var(--success) 45%, var(--line));
   color: var(--success);
   background: color-mix(in srgb, var(--success) 8%, var(--panel));
-  margin-bottom: 18px;
 }
 
 .badge-row,
@@ -246,17 +261,14 @@ h3 {
 
 .form-grid input,
 .form-grid select,
-.form-grid textarea {
+.form-grid textarea,
+.action-row input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--panel);
   color: var(--foreground);
   padding: 11px 12px;
-}
-
-.timeline {
-  margin-top: 12px;
 }
 
 .timeline-step {
