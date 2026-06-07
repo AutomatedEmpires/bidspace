@@ -11,7 +11,7 @@
 - Product/vision conflict → Notion decides. Implementation conflict → this repo decides. (See `docs/DECISIONS.md` D022, which supersedes D017's "repo wins on everything.")
 
 ## 1 · What BidSpace is
-A Level 3 spatial-commerce marketplace: hosts turn physical space + audience traffic into geolocated, biddable **Inventory Units**; bidders compete; host selection is curated (highest bid does not auto-win). Map-first, mobile-first, card-first. See `README.md` and `docs/` for the canonical spec.
+A map-first marketplace for temporary commercial inventory: hosts list space, bidders submit sealed competitive bids, hosts make curated selections (highest bid does not auto-win), and verification keeps the market trustworthy. See `README.md` and `docs/` for the canonical spec.
 
 ## 2 · The machine (where this is built)
 All apps are built on ONE machine. Assume exactly:
