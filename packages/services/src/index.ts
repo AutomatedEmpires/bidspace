@@ -8,3 +8,4 @@ export * from "./bidding.js";
 export * from "./discovery.js";
 export * from "./payments.js";
 export * from "./booking.js";
+export * from "./trust.js";
