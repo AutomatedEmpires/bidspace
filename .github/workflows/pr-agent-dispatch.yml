@@ -177,7 +177,7 @@ jobs:
                 responseSnippet ? `Response: ${responseSnippet}` : null,
                 '',
                 `Source: ${payload.comment_url || pull.html_url}`,
-              ].filter(Boolean).join('\n'));
+              ].filter((line) => line !== null).join('\n'));
               core.setFailed(`Webhook returned HTTP ${response.status}.`);
               return;
             }
@@ -197,4 +197,4 @@ jobs:
               `Source: ${payload.comment_url || pull.html_url}`,
               requestId ? `Request id: ${requestId}` : `Webhook status: HTTP ${response.status}`,
               prompt ? `Prompt: ${prompt}` : null,
-            ].filter(Boolean).join('\n'));
+            ].filter((line) => line !== null).join('\n'));
