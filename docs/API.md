@@ -1,26 +1,35 @@
-# API Resource Map (REST)
+# API & Transport
 
-Base: `/api/v1`. Auth via Clerk session; org context via `X-Org-Id`. Full OpenAPI 3.1 spec is a tracked follow-up.
+> **Transport (D025, LOCKED).** First-party flows use **Next.js App Router server actions** → typed service layer (`@bidspace/services` / `@bidspace/db`) → `revalidatePath`. Auth + active-org context is resolved **server-side via Clerk**, never trusted from client input or headers. **There is no bespoke REST API for the app's own screens.** Route handlers (`app/api/...`) are reserved for **webhooks / third-party callbacks** (e.g. Stripe) and for any explicitly **public/partner** API surface. The resource map below is the **logical resource model** those server actions operate on — and the shape a future public REST surface would take — not a mandate to build `/api/v1/*` for first-party UI.
 
-| Resource | Endpoints |
+## Logical resource model
+The canonical objects and the operations exposed over them (as server actions for first-party use; as REST only if/when a public API is built).
+
+| Resource | Operations |
 |---|---|
-| Organizations | `GET/POST /organizations`, `GET/PATCH /organizations/:id` |
-| Memberships | `GET/POST /organizations/:id/members`, `PATCH/DELETE /members/:id` |
-| Role Profiles | `GET/POST /role-profiles`, `PATCH /role-profiles/:id` |
-| Venues | `GET/POST /venues`, `GET/PATCH /venues/:id`, `GET /venues/:id/zones` |
-| Events | `GET/POST /events`, `GET/PATCH /events/:id` |
-| Collections | `GET/POST /collections`, `GET/PATCH /collections/:id` |
-| Opportunities | `GET/POST /opportunities`, `GET/PATCH /opportunities/:id` |
-| Inventory Units | `GET/POST /inventory-units`, `GET/PATCH /inventory-units/:id`, `GET /inventory-units/search` (PostGIS radius) |
-| Bids | `GET/POST /bids`, `GET/PATCH /bids/:id` (accept/reject/counter/waitlist via status) |
-| Bookings | `GET /bookings`, `GET/PATCH /bookings/:id` |
-| Payments | `POST /payments`, `GET /payments/:id`, `POST /webhooks/stripe` |
-| Reviews | `GET/POST /reviews` |
-| Verifications | `GET/POST /verifications`, `PATCH /verifications/:id` |
-| Documents | `GET/POST /documents` |
-| Messages | `GET/POST /messages` |
+| Organizations | list/create, get/update |
+| Memberships | list/create members, update/remove member |
+| Role Profiles | list/create, update |
+| Venues | list/create, get/update, list zones |
+| Events | list/create, get/update |
+| Collections | list/create, get/update |
+| Opportunities | list/create, get/update |
+| Inventory Units | list/create, get/update, **search** (PostGIS radius) |
+| Bids | list/create, get/update (accept/reject/counter/waitlist via status) |
+| Bookings | list, get/update |
+| Payments | create, get |
+| Reviews | list/create |
+| Verifications | list/create, update |
+| Documents | list/create |
+| Messages | list/create |
+
+## Reserved REST (route handlers only)
+- **Webhooks:** `POST /api/webhooks/stripe` (and future provider callbacks). Signature-verified; not part of the first-party app transport.
+- **Public / partner API (future, not MVP):** would be versioned under `/api/v1`, cursor-paginated (`?limit=&cursor=`), and documented with an OpenAPI 3.1 spec. Tracked as a follow-up; do not build for first-party screens.
 
 ## Conventions
-- Cursor pagination: `?limit=&cursor=`.
-- All mutations validate org membership + role.
-- Money in integer cents; currency explicit.
+- **First-party mutations are server actions** that validate org membership + role server-side (Clerk) before touching the service layer. Never accept the acting org id from client input.
+- **Reads** go through the typed service/DTO layer (`@bidspace/services`), never raw rows to the client.
+- **Money in integer cents** (D020), currency explicit; render via the shared money formatter.
+- **Sealed bids (D019):** viewer-scoped reads only; never leak competing bid data to bidders.
+- List operations use cursor pagination (`limit` + `cursor`).
