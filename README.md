@@ -1,8 +1,8 @@
 # BidSpace
 
-**A map-first bidding marketplace for temporary commercial inventory.**
+**A map-first marketplace for temporary commercial inventory.**
 
-BidSpace is a Level 3 *spatial commerce marketplace*: hosts turn physical space and audience traffic into geolocated, biddable **Inventory Units**, and bidders compete for access. The platform runs discovery, structured bidding, curated host selection, payments/booking, verification, and a compounding performance-data moat.
+BidSpace is a **map-first marketplace for temporary commercial inventory**: hosts list space, bidders submit sealed competitive bids, and verification keeps the market trustworthy.
 
 ## Core model
 - **Inventory Unit** is the marketplace primitive (separate from Opportunity).
