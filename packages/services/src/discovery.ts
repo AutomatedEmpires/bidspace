@@ -1,16 +1,24 @@
-import type { BidspaceClient } from "@bidspace/db";
+import type { BidspaceClient, GeoPoint } from "@bidspace/db";
 import type { CommerceLayer, InventoryUnitType, InventoryUnitStatus } from "@bidspace/core";
 import { ValidationError, fromDbError } from "./errors.js";
 
 // Phase 5 — spatial discovery (D009: map-first, card-first). Thin, typed
-// wrappers over the PostGIS RPCs in 0008_search.sql. Validation guards are pure
-// and unit-tested without a database.
+// wrappers over the PostGIS RPCs in 0008_search.sql, plus a non-spatial list
+// helper for the /discover list-first browse. Validation guards are pure and
+// unit-tested without a database.
 
 export const DEFAULT_SEARCH_RADIUS_M = 50_000;
 export const MAX_SEARCH_RADIUS_M = 500_000;
 export const MAX_SEARCH_LIMIT = 1000;
 export const DEFAULT_NEARBY_LIMIT = 100;
 export const DEFAULT_VIEWPORT_LIMIT = 500;
+export const DEFAULT_LIST_LIMIT = 120;
+
+const DISCOVERABLE_STATUSES = [
+  "available",
+  "receiving_bids",
+  "shortlisted",
+] as const satisfies readonly InventoryUnitStatus[];
 
 export interface DiscoveredUnit {
   id: string;
@@ -40,6 +48,12 @@ export interface ViewportParams {
   minLatitude: number;
   maxLongitude: number;
   maxLatitude: number;
+  type?: InventoryUnitType;
+  commerceLayer?: CommerceLayer;
+  limit?: number;
+}
+
+export interface ListDiscoverableUnitsParams {
   type?: InventoryUnitType;
   commerceLayer?: CommerceLayer;
   limit?: number;
@@ -96,6 +110,18 @@ interface RpcUnitRow {
   distance_m: number;
 }
 
+interface DiscoverableUnitRow {
+  id: string;
+  opportunity_id: string;
+  organization_id: string;
+  name: string;
+  type: InventoryUnitType;
+  status: InventoryUnitStatus;
+  commerce_layer: CommerceLayer | null;
+  minimum_bid_cents: number | null;
+  location: GeoPoint | null;
+}
+
 export function mapDiscoveredUnit(r: RpcUnitRow): DiscoveredUnit {
   return {
     id: r.id,
@@ -109,6 +135,24 @@ export function mapDiscoveredUnit(r: RpcUnitRow): DiscoveredUnit {
     longitude: r.longitude,
     latitude: r.latitude,
     distanceMeters: r.distance_m,
+  };
+}
+
+function mapDiscoverableUnit(r: DiscoverableUnitRow): DiscoveredUnit | null {
+  if (!r.location) return null;
+  const [longitude, latitude] = r.location.coordinates;
+  return {
+    id: r.id,
+    opportunityId: r.opportunity_id,
+    organizationId: r.organization_id,
+    name: r.name,
+    type: r.type,
+    status: r.status,
+    commerceLayer: r.commerce_layer,
+    minimumBidCents: r.minimum_bid_cents,
+    longitude,
+    latitude,
+    distanceMeters: 0,
   };
 }
 
@@ -150,4 +194,34 @@ export async function searchUnitsInViewport(
   });
   if (error) throw fromDbError("searchUnitsInViewport", error);
   return ((data ?? []) as RpcUnitRow[]).map(mapDiscoveredUnit);
+}
+
+// Non-spatial browse for the list-first /discover view. Returns the most
+// recently updated discoverable, geolocated units so the page is usable even
+// without a point or viewport. Distance is 0 (not applicable) for this mode.
+export async function listDiscoverableUnits(
+  db: BidspaceClient,
+  params: ListDiscoverableUnitsParams = {},
+): Promise<DiscoveredUnit[]> {
+  const limit = normalizeLimit(params.limit, DEFAULT_LIST_LIMIT);
+  let query = db
+    .from("inventory_units")
+    .select(
+      "id, opportunity_id, organization_id, name, type, status, commerce_layer, minimum_bid_cents, location",
+    )
+    .is("archived_at", null)
+    .not("location", "is", null)
+    .in("status", [...DISCOVERABLE_STATUSES])
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (params.type) query = query.eq("type", params.type);
+  if (params.commerceLayer) query = query.eq("commerce_layer", params.commerceLayer);
+
+  const { data, error } = await query;
+  if (error) throw fromDbError("listDiscoverableUnits", error);
+
+  return ((data ?? []) as DiscoverableUnitRow[])
+    .map(mapDiscoverableUnit)
+    .filter((unit): unit is DiscoveredUnit => unit !== null);
 }

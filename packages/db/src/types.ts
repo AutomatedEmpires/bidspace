@@ -110,11 +110,19 @@ export interface OpportunityRow {
   venue_id: string | null;
   event_id: string | null;
   title: string;
+  slug: string | null;
+  description: string | null;
   status: OpportunityStatus;
   pricing_mode: PricingMode;
   commerce_layer: CommerceLayer | null;
   minimum_bid_cents: number | null;
   bid_deadline: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  audience_profile: string | null;
+  estimated_attendance: number | null;
+  category_tags: string[];
+  image_urls: string[];
   created_at: string;
   updated_at: string;
 }
@@ -123,9 +131,14 @@ export interface InventoryUnitRow {
   id: string;
   opportunity_id: string;
   organization_id: string;
+  venue_id: string | null;
+  event_id: string | null;
+  zone_id: string | null;
+  collection_id: string | null;
   type: InventoryUnitType;
   status: InventoryUnitStatus;
   name: string;
+  commerce_layer: CommerceLayer | null;
   pricing_mode: PricingMode;
   minimum_bid_cents: number | null;
   buy_now_price_cents: number | null;
@@ -133,6 +146,21 @@ export interface InventoryUnitRow {
   availability_start: string;
   availability_end: string;
   location: GeoPoint | null;
+  dimensions: string | null;
+  indoor: boolean | null;
+  power_available: boolean | null;
+  water_available: boolean | null;
+  wifi_available: boolean | null;
+  vehicle_access: boolean | null;
+  setup_window: string | null;
+  teardown_window: string | null;
+  required_documents: string[];
+  category_restrictions: string[];
+  outcome_tags: string[];
+  visibility_score: number | null;
+  traffic_score: number | null;
+  notes: string | null;
+  image_urls: string[];
   created_at: string;
   updated_at: string;
 }
