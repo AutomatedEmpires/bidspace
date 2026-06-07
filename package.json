@@ -9,9 +9,11 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "test": "turbo run test",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   }

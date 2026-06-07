@@ -1,20 +1,20 @@
 # BidSpace — Agent Operating Contract
 
 > **Binding contract for every agent (human or AI) that touches this repo. Read it fully before doing anything.**
-> Aligned to the Explore&Earn (E&E) doctrine. BidSpace is one of three apps in the AutomatedEmpires venture system; E&E is the reference implementation.
+> Aligned to the Explore&Earn (E&E) doctrine. BidSpace is one of the apps in the AutomatedEmpires venture system; E&E is the reference implementation.
 
 ## 0 · Prime doctrine
-**Notion decides. GitHub builds. Figma shows. Everything else runs.**
+**Notion decides and builds. GitHub reviews and ships. Figma shows. Everything else runs.**
 
-- **Notion** = product & vision truth (what we build and why).
-- **This repo** = implementation truth (how it is actually built).
+- **Notion** = product & vision truth (what we build and why), and where the bulk of the build — specs, architecture, data models, copy — is authored before code moves.
+- **This repo** = implementation truth (how it is actually built); GitHub validates, reviews, and ships what Notion produced.
 - Product/vision conflict → Notion decides. Implementation conflict → this repo decides. (See `docs/DECISIONS.md` D022, which supersedes D017's "repo wins on everything.")
 
 ## 1 · What BidSpace is
 A Level 3 spatial-commerce marketplace: hosts turn physical space + audience traffic into geolocated, biddable **Inventory Units**; bidders compete; host selection is curated (highest bid does not auto-win). Map-first, mobile-first, card-first. See `README.md` and `docs/` for the canonical spec.
 
 ## 2 · The machine (where this is built)
-All three apps are built on ONE machine. Assume exactly:
+All apps are built on ONE machine. Assume exactly:
 - Windows 11 ARM64 (Snapdragon X Elite) → WSL2 Ubuntu 24.04 → VS Code
 - Working path: `/home/jackson/automatedempires/ventures/bidspace`
 - 16 GB RAM. **One agent at a time** — do not assume parallel heavy builds or long-running watchers.
@@ -57,9 +57,9 @@ Shared providers across all AutomatedEmpires apps. Do not introduce alternates w
 
 ## 7 · GitHub management
 - Work on lane/feature branches → small PRs → review → merge. Never push straight to `main`.
-- CI (`.github/workflows/ci.yml`) runs typecheck + lint + build on every PR; keep it green. (Pending: the workflow file still needs to be added once the GitHub app has `workflows` permission.)
+- CI (`.github/workflows/ci.yml`) calls the org-shared reusable workflow (`AutomatedEmpires/.github/.github/workflows/reusable-ci.yml`) and runs typecheck + lint + build (+ tests when present) on every PR; keep it green.
 - Use phase/area labels consistently and tie PRs to issues.
-- Notion ↔ GitHub sync mirrors issues/PRs into Notion for lane agents (see the tracking issue to stand this up).
+- Notion ↔ GitHub sync mirrors issues/PRs into Notion for lane agents (live).
 
 ## 8 · Cross-app alignment
-E&E is the reference. BidSpace, Sweepza, and E&E share the same doctrine, machine, runtime, and integration spine so an agent moving between repos reads one contract. Differences are product scope only, never workflow. See `docs/AGENT-ALIGNMENT-NOTES.md` for what was aligned and why.
+E&E is the reference. E&E, BidSpace, Sweepza, and LogLoads share the same doctrine, machine, runtime, and integration spine so an agent moving between repos reads one contract. Differences are product scope only, never workflow. See `docs/AGENT-ALIGNMENT-NOTES.md` for what was aligned and why.
