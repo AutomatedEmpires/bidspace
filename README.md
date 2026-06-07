@@ -2,7 +2,7 @@
 
 **A map-first marketplace for temporary commercial inventory.**
 
-BidSpace is a **map-first marketplace for temporary commercial inventory**: hosts list space, bidders submit sealed competitive bids, and verification keeps the market trustworthy.
+Hosts list space, bidders submit sealed competitive bids, hosts make curated selections (highest bid does not auto-win), and verification keeps the market trustworthy.
 
 ## Core model
 - **Inventory Unit** is the marketplace primitive (separate from Opportunity).
