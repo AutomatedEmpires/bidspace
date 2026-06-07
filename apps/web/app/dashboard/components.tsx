@@ -1,6 +1,13 @@
 import type { BidRow, BookingRow, InventoryUnitRow, OpportunityRow, PaymentRow } from "@bidspace/db";
 import type { BidStatus } from "@bidspace/core";
-import { bidTimeline, describeBidStatus, effectiveBidCents, formatCents, humanize, statusAllows } from "@/lib/transaction-workflow";
+import {
+  bidTimeline,
+  describeBidStatus,
+  effectiveBidCents,
+  formatCents,
+  humanize,
+  statusAllows,
+} from "@/lib/transaction-workflow";
 import { hostBidAction, withdrawBidAction } from "./transaction-actions";
 
 export function AlertMessages({
@@ -62,7 +69,7 @@ export function BookingPrepCard({
   }
 
   return (
-    <div className="card card-soft">
+    <div className="card card-soft stack">
       <div className="card-header">
         <div>
           <p className="eyebrow">Booking prep</p>
@@ -70,7 +77,7 @@ export function BookingPrepCard({
         </div>
         <span className="badge badge-warning">Payment pending</span>
       </div>
-      <div className="stat-row" style= marginTop: 12 >
+      <div className="stat-row">
         <div className="stat">
           <span className="muted">Booking price</span>
           <strong>{formatCents(booking.price_cents)}</strong>
@@ -84,14 +91,16 @@ export function BookingPrepCard({
           <strong>{formatDate(booking.ends_at)}</strong>
         </div>
       </div>
-      <p className="muted" style= marginTop: 12 >
+      <p className="muted">
         No Stripe checkout has been created in this workflow. Payment remains pending until a real payment provider is wired and settles successfully.
       </p>
       {payment ? (
-        <p className="muted" style= marginTop: 8 >
+        <p className="muted">
           Payment record: {humanize(payment.status)} · Platform fee {formatCents(payment.platform_fee_cents)} · Host payout {formatCents(payment.host_payout_cents)}
         </p>
-      ) : null}
+      ) : (
+        <p className="muted">No payment record exists yet; booking prep is waiting for the payment provider adapter.</p>
+      )}
     </div>
   );
 }
@@ -110,7 +119,7 @@ export function BidSummary({
   hostName?: string | null;
 }) {
   return (
-    <div className="grid" style= gap: 10 >
+    <div className="stack">
       <div className="card-header">
         <div>
           <p className="eyebrow">{unit?.name ?? "Opportunity bid"}</p>
@@ -161,14 +170,12 @@ export function BidderBidCard({
   hostName: string | null;
 }) {
   return (
-    <article className="card">
+    <article className="card stack">
       <BidSummary bid={bid} opportunity={opportunity} unit={unit} hostName={hostName} />
-      <div style= marginTop: 16 >
-        <BidderGuidance status={bid.status} booking={booking} />
-      </div>
-      {booking ? <div style= marginTop: 16 ><BookingPrepCard booking={booking} payment={payment} /></div> : null}
+      <BidderGuidance status={bid.status} booking={booking} />
+      {booking ? <BookingPrepCard booking={booking} payment={payment} /> : null}
       {statusAllows(bid.status, "withdrawn") ? (
-        <form action={withdrawBidAction} className="action-row" style= marginTop: 16 >
+        <form action={withdrawBidAction} className="action-row">
           <input type="hidden" name="bidId" value={bid.id} />
           <input type="hidden" name="returnTo" value="/dashboard/bids" />
           <button className="button-danger" type="submit">Withdraw bid</button>
@@ -194,24 +201,20 @@ export function HostBidCard({
   bidderName: string | null;
 }) {
   return (
-    <article className="card">
+    <article className="card stack">
       <BidSummary bid={bid} opportunity={opportunity} unit={unit} bidderName={bidderName} />
-      <p className="muted" style= marginTop: 12 >
+      <p className="muted">
         Host selection is curated: use price, fit, timing, and operational needs. The UI intentionally avoids a winner leaderboard.
       </p>
       <HostActionForms bid={bid} />
-      {bid.status === "payment_pending" || booking ? (
-        <div style= marginTop: 16 >
-          <BookingPrepCard booking={booking} payment={payment} />
-        </div>
-      ) : null}
+      {bid.status === "payment_pending" || booking ? <BookingPrepCard booking={booking} payment={payment} /> : null}
     </article>
   );
 }
 
 function HostActionForms({ bid }: { bid: BidRow }) {
   return (
-    <div className="grid" style= marginTop: 16 >
+    <div className="stack">
       <div className="action-row">
         <HostActionButton bidId={bid.id} action="view" label="Mark viewed" enabled={statusAllows(bid.status, "viewed")} />
         <HostActionButton bidId={bid.id} action="shortlist" label="Shortlist" enabled={statusAllows(bid.status, "shortlisted")} />
