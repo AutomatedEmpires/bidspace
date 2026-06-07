@@ -46,7 +46,7 @@ Shared providers across all AutomatedEmpires apps. Do not introduce alternates w
 - `apps/` — web (Next.js), mobile (Expo), api (later)
 - `packages/db/` — SQL migrations (Postgres + PostGIS); schema source of truth
 - `packages/ui/`, `packages/core/` — shared UI + domain logic
-- `docs/` — canonical, deduped spec (DECISIONS, ARCHITECTURE, DATA-MODEL, API, ROADMAP, GTM, INTEGRATIONS)
+- `docs/` — canonical, deduped spec (DECISIONS, ARCHITECTURE, DATA-MODEL, API, ROUTES, SCREENS-AND-CARDS, TRUST-AND-SCORING, ROADMAP, GTM, INTEGRATIONS)
 
 ## 6 · How we work
 - **Communicate through durable artifacts.** Issues, PRs, and `docs/` are the memory. If it is not written down, it did not happen.
@@ -54,6 +54,7 @@ Shared providers across all AutomatedEmpires apps. Do not introduce alternates w
 - **One owner per area.** Hand off via artifacts, not assumptions.
 - **Respect founder gates.** Anything money-moving, legally binding, destructive, or schema-breaking waits for explicit founder sign-off.
 - **Cite canon.** When implementing from a decision or Notion spec, reference it (e.g. "implements D006 / Notion: BidSpace spec").
+- **Canon parity.** Changes touching routes, cards, trust/scoring, or economics must match `docs/ROUTES.md`, `docs/SCREENS-AND-CARDS.md`, `docs/TRUST-AND-SCORING.md`, and `docs/DECISIONS.md` — and cite the decision. If the canon is wrong, update Notion + these docs first.
 
 ## 7 · GitHub management
 - Work on lane/feature branches → small PRs → review → merge. Never push straight to `main`.

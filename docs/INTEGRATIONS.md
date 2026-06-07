@@ -49,7 +49,14 @@ The approved **third-party service providers** for BidSpace. Build against these
 ## Docs & ops
 | Provider | Role | Notes |
 |---|---|---|
-| **Notion (Business)** | Vision log + ops/PM | Founder journal; **the repo is canonical for spec/code** (D017). |
+| **Notion (Business)** | Vision log + ops/PM | Founder journal; **the repo is canonical for spec/code** (D017/D022). |
+
+## Superseded providers (do not reintroduce without a dated decision)
+Considered and explicitly dropped; agents must not re-add them:
+- **Azure / .NET** -> Supabase (Postgres + PostGIS) + Vercel. See `docs/ARCHITECTURE.md`.
+- **Google Maps** -> Mapbox (D014).
+- **Twilio / SendGrid** -> not in the spine; transactional email via Clerk, notifications in-app for MVP.
+- **Bubble / no-code** -> TypeScript + Next.js end-to-end (D011).
 
 ## Standard tooling (assumed, not a provider)
 npm / pnpm · Playwright (e2e) · TypeScript · ESLint + Prettier · Turborepo · Supabase CLI · Stripe CLI. In use across the monorepo; listed here only to record that they are part of the workflow.
