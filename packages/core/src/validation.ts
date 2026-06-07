@@ -7,6 +7,8 @@ import {
   INVENTORY_UNIT_TYPE,
   VENUE_TYPE,
   EVENT_TYPE,
+  VERIFICATION_SUBJECT_TYPE,
+  VERIFICATION_TYPE,
 } from "./enums";
 
 const slug = z
@@ -14,6 +16,8 @@ const slug = z
   .min(1)
   .max(120)
   .regex(/^[a-z0-9-]+$/, "slug must be lowercase alphanumeric with dashes");
+
+const rating = z.number().min(1).max(5);
 
 export const organizationCreateSchema = z.object({
   name: z.string().min(1).max(200),
@@ -115,3 +119,30 @@ export const bidCreateSchema = z.object({
   preferences: z.array(bidPreferenceSchema).optional(),
 });
 export type BidCreate = z.infer<typeof bidCreateSchema>;
+
+export const reviewCreateSchema = z.object({
+  bookingId: z.string().uuid(),
+  reviewerOrganizationId: z.string().uuid(),
+  reviewedOrganizationId: z.string().uuid(),
+  rating,
+  trafficAccuracyRating: rating.optional(),
+  communicationRating: rating.optional(),
+  setupRating: rating.optional(),
+  professionalismRating: rating.optional(),
+  writtenFeedback: z.string().max(4000).optional(),
+  wouldBookAgain: z.boolean().optional(),
+  actualTrafficFeedback: z.string().max(4000).optional(),
+  photoUrls: z.array(z.string().url()).default([]),
+});
+export type ReviewCreate = z.infer<typeof reviewCreateSchema>;
+
+export const verificationCreateSchema = z.object({
+  subjectType: z.enum(VERIFICATION_SUBJECT_TYPE),
+  subjectId: z.string().uuid(),
+  verificationType: z.enum(VERIFICATION_TYPE),
+  evidenceDocumentIds: z.array(z.string().uuid()).default([]),
+  expiresAt: z.string().datetime().optional(),
+  riskScore: z.number().min(0).max(100).optional(),
+  notes: z.string().max(4000).optional(),
+});
+export type VerificationCreate = z.infer<typeof verificationCreateSchema>;
