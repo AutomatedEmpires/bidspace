@@ -7,9 +7,9 @@ import {
   bidStatusTransitions,
   canTransition,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getOpportunity } from "./opportunities.js";
-import { getInventoryUnit } from "./inventory-units.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getOpportunity } from "./opportunities";
+import { getInventoryUnit } from "./inventory-units";
 
 // Pure, persistence-free guard for whether a bid may be placed.
 export interface BidEligibilityInput {

@@ -1,6 +1,6 @@
 import type { BidspaceClient } from "@bidspace/db";
 import type { CommerceLayer, InventoryUnitType, InventoryUnitStatus } from "@bidspace/core";
-import { ValidationError, fromDbError } from "./errors.js";
+import { ValidationError, fromDbError } from "./errors";
 
 // Phase 5 — spatial discovery (D009: map-first, card-first). Thin, typed
 // wrappers over the PostGIS RPCs in 0008_search.sql. Validation guards are pure

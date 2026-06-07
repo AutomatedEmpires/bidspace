@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assertBidAcceptable, visibleBidsFor } from "./bidding.js";
-import { ValidationError } from "./errors.js";
+import { assertBidAcceptable, visibleBidsFor } from "./bidding";
+import { ValidationError } from "./errors";
 
 test("accepts a valid bid at or above the minimum", () => {
   assert.doesNotThrow(() =>

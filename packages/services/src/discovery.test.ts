@@ -9,8 +9,8 @@ import {
   DEFAULT_SEARCH_RADIUS_M,
   MAX_SEARCH_RADIUS_M,
   MAX_SEARCH_LIMIT,
-} from "./discovery.js";
-import { ValidationError } from "./errors.js";
+} from "./discovery";
+import { ValidationError } from "./errors";
 
 test("assertCoordinate accepts valid lat/lng", () => {
   assert.doesNotThrow(() => assertCoordinate(34.05, -118.24));
