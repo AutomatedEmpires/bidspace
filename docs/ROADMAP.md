@@ -12,7 +12,7 @@
 9. Reviews + Verification + Admin
 10. Performance data capture
 
-## Status (as of 2026-06-04)
+## Status (as of 2026-06-06)
 
 Legend: ✅ shipped to `main` · 🟨 partial (backend only) · ⬜ not started
 
@@ -22,8 +22,8 @@ Legend: ✅ shipped to `main` · 🟨 partial (backend only) · ⬜ not started
 | 2 | `core` domain package | ✅ | `money` (integer cents, 10% fee), enums, state machines, zod validation. |
 | 3 | Clerk auth + orgs + onboarding | ✅ | `apps/web` App Router shell, middleware org-context, onboarding → `organizations`/`organization_memberships`/`role_profiles`. Requires Clerk + Supabase env vars to build/run. |
 | 4 | Venue/Event/Opportunity/Inventory CRUD + API | 🟨 | Service layer + validation in `@bidspace/services`; UI/route handlers pending. |
-| 5 | Map/list discovery (Mapbox + PostGIS) | 🟨 | `searchNearbyUnits` / `searchUnitsInViewport` + RPCs shipped; map UI pending. |
-| 6 | Inventory Unit detail page | ⬜ | UI not started. |
+| 5 | Map/list discovery (Mapbox + PostGIS) | 🟨 | List-first discovery surface at `/discover` shipped: filter panel (unit type, commerce layer, location mode, radius/viewport-friendly query params), server data helper `apps/web/lib/discovery.ts`, `listDiscoverableUnits` + nearby/viewport PostGIS search, and a dependency-free map preview that plots returned points. Rich Mapbox GL render still pending. |
+| 6 | Inventory Unit detail page | ✅ | `/inventory-units/[id]` detail page shipped: opportunity context, specs, amenities, requirements, sealed-bid messaging (D019), and a sign-in CTA that preserves the unit redirect. |
 | 7 | Bid submission + host pipeline | 🟨 | Bidding service (`placeBid`, sealed-bid visibility, view/shortlist/accept/reject/waitlist/counter) shipped; submission + pipeline UI pending. |
 | 8 | Accept/reject/waitlist + Stripe Connect + Booking | 🟨 | Payments service (split/fee, Stripe Connect destination-charge params, payment-before-booking) + booking service shipped; checkout UI + live Stripe wiring pending. |
 | 9 | Reviews + Verification + Admin | ⬜ | Not started. |
