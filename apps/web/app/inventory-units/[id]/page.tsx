@@ -9,15 +9,6 @@ import {
 
 type PageParams = Promise<{ id: string }>;
 
-function Amenity({ label, available }: { label: string; available: boolean | null }) {
-  if (available == null) return null;
-  return (
-    <li className="unit-detail__amenity" data-available={available ? "yes" : "no"}>
-      <span aria-hidden="true">{available ? "\u2713" : "\u2014"}</span> {label}
-    </li>
-  );
-}
-
 function BidCard({ unit }: { unit: DiscoveryUnitDetail }) {
   const signInHref = `/sign-in?redirect_url=${encodeURIComponent(unit.href)}`;
   const minimum = formatMoney(unit.minimumBidCents);
@@ -67,7 +58,7 @@ export default async function InventoryUnitPage({ params }: { params: PageParams
     return (
       <main className="page-shell unit-detail">
         <Link href="/discover" className="unit-detail__back">
-          \u2190 Back to discovery
+          ← Back to discovery
         </Link>
         <div className="notice" role="status">
           <p className="notice__title">This listing is not available right now</p>
@@ -85,7 +76,7 @@ export default async function InventoryUnitPage({ params }: { params: PageParams
   return (
     <main className="page-shell unit-detail">
       <Link href="/discover" className="unit-detail__back">
-        \u2190 Back to discovery
+        ← Back to discovery
       </Link>
 
       <div className="unit-detail__layout">
@@ -93,18 +84,32 @@ export default async function InventoryUnitPage({ params }: { params: PageParams
           <header className="unit-detail__header">
             <p className="unit-detail__eyebrow">
               {unit.unitTypeLabel}
-              {unit.commerceLayerLabel ? `  \u00b7  ${unit.commerceLayerLabel}` : ""}
+              {unit.commerceLayerLabel ? `  ·  ${unit.commerceLayerLabel}` : ""}
             </p>
             <h1 className="unit-detail__title">{unit.name}</h1>
             {unit.opportunityTitle ? (
               <p className="unit-detail__opportunity">{unit.opportunityTitle}</p>
             ) : null}
             <ul className="unit-detail__facts">
-              {unit.locationLabel ? <li>\ud83d\udccd {unit.locationLabel}</li> : null}
-              {unit.dateRangeLabel ? <li>\ud83d\uddd3\ufe0f {unit.dateRangeLabel}</li> : null}
-              {unit.hostName ? <li>\ud83c\udfe2 {unit.hostName}</li> : null}
+              {unit.locationLabel ? (
+                <li>
+                  <span aria-hidden="true">📍</span> {unit.locationLabel}
+                </li>
+              ) : null}
+              {unit.dateRangeLabel ? (
+                <li>
+                  <span aria-hidden="true">🗓️</span> {unit.dateRangeLabel}
+                </li>
+              ) : null}
+              {unit.hostName ? (
+                <li>
+                  <span aria-hidden="true">🏢</span> {unit.hostName}
+                </li>
+              ) : null}
               {unit.estimatedAttendance != null ? (
-                <li>\ud83d\udc65 {unit.estimatedAttendance.toLocaleString("en-US")} expected</li>
+                <li>
+                  <span aria-hidden="true">👥</span> {unit.estimatedAttendance.toLocaleString("en-US")} expected
+                </li>
               ) : null}
             </ul>
           </header>
@@ -160,13 +165,15 @@ export default async function InventoryUnitPage({ params }: { params: PageParams
                 </div>
               ) : null}
             </dl>
-            <ul className="unit-detail__amenities">
-              <Amenity label="Indoor" available={unit.indoorFlag} />
-              <Amenity label="Power" available={unit.powerFlag} />
-              <Amenity label="Water" available={unit.waterFlag} />
-              <Amenity label="Wi-Fi" available={unit.wifiFlag} />
-              <Amenity label="Vehicle access" available={unit.vehicleFlag} />
-            </ul>
+            {unit.amenities.length > 0 ? (
+              <ul className="unit-detail__amenities">
+                {unit.amenities.map((amenity) => (
+                  <li key={amenity} className="unit-detail__amenity">
+                    <span aria-hidden="true">✓</span> {amenity}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </section>
 
           {unit.requiredDocuments.length > 0 ? (
