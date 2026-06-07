@@ -15,12 +15,22 @@ Base: `/api/v1`. Auth via Clerk session; org context via `X-Org-Id`. Full OpenAP
 | Bids | `GET/POST /bids`, `GET/PATCH /bids/:id` (accept/reject/counter/waitlist via status) |
 | Bookings | `GET /bookings`, `GET/PATCH /bookings/:id` |
 | Payments | `POST /payments`, `GET /payments/:id`, `POST /webhooks/stripe` |
-| Reviews | `GET/POST /reviews` |
-| Verifications | `GET/POST /verifications`, `PATCH /verifications/:id` |
+| Reviews | `GET/POST /reviews`; web route `POST /api/v1/reviews` captures active-org post-booking feedback and stores `submitted` reviews. |
+| Verifications | `GET/POST /verifications`, `PATCH /verifications/:id`; web route `POST /api/v1/verifications` creates pending verification requests for manager+ users. |
 | Documents | `GET/POST /documents` |
 | Messages | `GET/POST /messages` |
+
+## Authenticated web route map
+
+| Route | Purpose |
+|---|---|
+| `/dashboard` | Role-aware command center summarizing active organization context, sealed bid posture, trust score, and marketplace next actions. |
+| `/trust` | Organization trust center for verification state, evidence documents, trust score reasons, and verification request capture. |
+| `/reviews` | Review capture and reputation display for received/given organization feedback. |
+| `/admin` | Operator-facing marketplace oversight for verification workload, admin actions, supply readiness, and sealed-bid health. |
 
 ## Conventions
 - Cursor pagination: `?limit=&cursor=`.
 - All mutations validate org membership + role.
 - Money in integer cents; currency explicit.
+- Ratings and trust scores are numeric but are **not money** and stay outside D020 integer-cents handling.
