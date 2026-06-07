@@ -30,8 +30,10 @@ export function DiscoveryCard({ card }: DiscoveryCardProps) {
 
       <div className="discovery-card__body">
         <p className="discovery-card__eyebrow">
-          {card.unitTypeLabel}
-          {card.commerceLayerLabel ? <span> \u00b7 {card.commerceLayerLabel}</span> : null}
+          <span>{card.unitTypeLabel}</span>
+          {card.commerceLayerLabel ? (
+            <span className="discovery-card__eyebrow-sep">{card.commerceLayerLabel}</span>
+          ) : null}
         </p>
         <h3 className="discovery-card__title">{card.name}</h3>
         {card.opportunityTitle ? (
@@ -39,10 +41,20 @@ export function DiscoveryCard({ card }: DiscoveryCardProps) {
         ) : null}
 
         <ul className="discovery-card__meta">
-          {card.venueLabel ? <li>\ud83d\udccd {card.venueLabel}</li> : null}
-          {card.dateRangeLabel ? <li>\ud83d\uddd3 {card.dateRangeLabel}</li> : null}
+          {card.venueLabel ? (
+            <li>
+              <span aria-hidden="true">📍</span> {card.venueLabel}
+            </li>
+          ) : null}
+          {card.dateRangeLabel ? (
+            <li>
+              <span aria-hidden="true">🗓️</span> {card.dateRangeLabel}
+            </li>
+          ) : null}
           {card.estimatedAttendance != null ? (
-            <li>\ud83d\udc65 {card.estimatedAttendance.toLocaleString("en-US")} expected</li>
+            <li>
+              <span aria-hidden="true">👥</span> {card.estimatedAttendance.toLocaleString("en-US")} expected
+            </li>
           ) : null}
         </ul>
 
@@ -57,13 +69,13 @@ export function DiscoveryCard({ card }: DiscoveryCardProps) {
         ) : null}
 
         {card.amenities.length > 0 ? (
-          <p className="discovery-card__amenities">{card.amenities.join(" \u00b7 ")}</p>
+          <p className="discovery-card__amenities">{card.amenities.join(" · ")}</p>
         ) : null}
       </div>
 
       <div className="discovery-card__footer">
         <span className="discovery-card__price">{card.priceLabel}</span>
-        <span className="discovery-card__cta">View &amp; bid \u2192</span>
+        <span className="discovery-card__cta">View &amp; bid →</span>
       </div>
     </Link>
   );
