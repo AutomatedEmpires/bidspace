@@ -12,24 +12,24 @@
 9. Reviews + Verification + Admin
 10. Performance data capture
 
-## Status (as of 2026-06-04)
+## Status (as of 2026-06-06)
 
-Legend: ✅ shipped to `main` · 🟨 partial (backend only) · ⬜ not started
+Legend: ✅ shipped to `main` · 🟨 partial · ⬜ not started
 
 | # | Area | Status | Notes |
 |---|------|--------|-------|
 | 1 | DB schema + migrations | ✅ | Tables, enums, PostGIS, RLS scaffolding. |
 | 2 | `core` domain package | ✅ | `money` (integer cents, 10% fee), enums, state machines, zod validation. |
 | 3 | Clerk auth + orgs + onboarding | ✅ | `apps/web` App Router shell, middleware org-context, onboarding → `organizations`/`organization_memberships`/`role_profiles`. Requires Clerk + Supabase env vars to build/run. |
-| 4 | Venue/Event/Opportunity/Inventory CRUD + API | 🟨 | Service layer + validation in `@bidspace/services`; UI/route handlers pending. |
+| 4 | Venue/Event/Opportunity/Inventory CRUD + API | 🟨 | Service layer + validation in `@bidspace/services`; full host CRUD UI/route handlers pending. |
 | 5 | Map/list discovery (Mapbox + PostGIS) | 🟨 | `searchNearbyUnits` / `searchUnitsInViewport` + RPCs shipped; map UI pending. |
-| 6 | Inventory Unit detail page | ⬜ | UI not started. |
-| 7 | Bid submission + host pipeline | 🟨 | Bidding service (`placeBid`, sealed-bid visibility, view/shortlist/accept/reject/waitlist/counter) shipped; submission + pipeline UI pending. |
-| 8 | Accept/reject/waitlist + Stripe Connect + Booking | 🟨 | Payments service (split/fee, Stripe Connect destination-charge params, payment-before-booking) + booking service shipped; checkout UI + live Stripe wiring pending. |
+| 6 | Inventory Unit detail page | 🟨 | Unit-detail bid submission route exists at `/inventory-units/[unitId]`; broader discovery/unit browsing still pending. |
+| 7 | Bid submission + host pipeline | 🟨 | Bidder bid-management page, host incoming-bid pipeline, server actions, sealed visibility, view/shortlist/accept/reject/waitlist/counter/request-payment actions shipped. |
+| 8 | Accept/reject/waitlist + Stripe Connect + Booking | 🟨 | Booking-prep and payment-pending UI shipped without live Stripe execution; payment provider checkout remains pending. |
 | 9 | Reviews + Verification + Admin | ⬜ | Not started. |
 | 10 | Performance data capture | ⬜ | Not started. |
 
-**Vision alignment (locked decisions):** integer-cents money (D020), 10% seller-side platform fee (D018), sealed bids with host-visible full view (D019), payment-before-booking with Stripe Connect destination charges (D021/D022). Service layer enforces all four on the locked spine.
+**Vision alignment (locked decisions):** integer-cents money (D020), 10% seller-side platform fee (D018), sealed bids with host-visible full view (D019), payment-before-booking with Stripe Connect destination charges (D021/D022). Service layer and web workflow enforce these constraints without introducing fake payment execution.
 
 **Open decisions tracked in the BidSpace journal / issues:** O3 allocation policy (Phase 7–8 currently host-discretion accept/reject/shortlist), O4 verification criteria, O5 search-infra trigger, O6 legal/compliance.
 

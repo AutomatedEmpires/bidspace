@@ -20,6 +20,19 @@ Base: `/api/v1`. Auth via Clerk session; org context via `X-Org-Id`. Full OpenAP
 | Documents | `GET/POST /documents` |
 | Messages | `GET/POST /messages` |
 
+## Current App Router workflow surface
+
+The transactional MVP slice currently uses authenticated App Router pages plus server actions rather than public REST handlers:
+
+| Surface | Purpose |
+|---|---|
+| `GET /inventory-units/[unitId]` | Unit-detail view, sealed bid submission form, and bidder-only bid history for that unit. |
+| `GET /dashboard/bids` | Bidder bid-management view. Queries only the active bidder organization's bids. |
+| `GET /dashboard/host/bids` | Host incoming-bid pipeline. Queries bids where the active org is the host. |
+| Server actions in `apps/web/app/dashboard/transaction-actions.ts` | Place bid, withdraw bidder bid, host view/shortlist/accept/reject/waitlist/counter, and host payment-request/booking-prep. |
+
+The payment-request action creates/returns booking-prep state (`pending_payment`) only. It does not call Stripe, create checkout, or imply money movement.
+
 ## Conventions
 - Cursor pagination: `?limit=&cursor=`.
 - All mutations validate org membership + role.
