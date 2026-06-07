@@ -1,7 +1,7 @@
 import type { BidspaceClient, BookingRow } from "@bidspace/db";
 import { type BookingStatus, bookingStatusTransitions, canTransition } from "@bidspace/core";
 import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getBid, transitionBid } from "./bidding.js";
+import { assertHostOwnsBid, getBid, transitionBid } from "./bidding.js";
 import { getInventoryUnit } from "./inventory-units.js";
 
 // A booking is created in `pending_payment` as soon as a host moves an accepted
@@ -46,6 +46,47 @@ export async function getBooking(db: BidspaceClient, id: string): Promise<Bookin
   if (error) throw fromDbError("getBooking", error);
   if (!data) throw new NotFoundError("booking", id);
   return data as BookingRow;
+}
+
+export async function getBookingForBid(
+  db: BidspaceClient,
+  bidId: string,
+): Promise<BookingRow | null> {
+  const { data, error } = await db.from("bookings").select("*").eq("bid_id", bidId).maybeSingle();
+  if (error) throw fromDbError("getBookingForBid", error);
+  return (data as BookingRow | null) ?? null;
+}
+
+// Idempotent booking-prep transition for the no-live-Stripe path: accepted bid
+// -> payment_pending bid -> pending_payment booking. It does not create a
+// PaymentIntent or imply that money has moved.
+export async function prepareBookingPaymentForBid(
+  db: BidspaceClient,
+  bidId: string,
+): Promise<BookingRow> {
+  const existing = await getBookingForBid(db, bidId);
+  if (existing) return existing;
+
+  const bid = await getBid(db, bidId);
+  if (bid.status === "accepted") {
+    await transitionBid(db, bidId, "payment_pending");
+  } else if (bid.status !== "payment_pending") {
+    throw new ValidationError(
+      `Bid must be accepted before payment can be requested (got: ${bid.status})`,
+    );
+  }
+
+  return createBookingForBid(db, bidId);
+}
+
+export async function prepareHostBookingPaymentForBid(
+  db: BidspaceClient,
+  bidId: string,
+  hostOrganizationId: string,
+): Promise<BookingRow> {
+  const bid = await getBid(db, bidId);
+  assertHostOwnsBid(bid, hostOrganizationId);
+  return prepareBookingPaymentForBid(db, bidId);
 }
 
 export async function transitionBooking(
