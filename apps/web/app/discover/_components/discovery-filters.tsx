@@ -74,7 +74,7 @@ export function DiscoveryFilters({ filters }: DiscoveryFiltersProps) {
 
         <details>
           <summary className="badge">Viewport parameters</summary>
-          <div className="viewport-grid" style= marginTop: 10 >
+          <div className="viewport-grid viewport-fields">
             <div className="field">
               <label htmlFor="minLat">Min lat</label>
               <input id="minLat" name="minLat" inputMode="decimal" defaultValue={filters.minLatitude ?? ""} />

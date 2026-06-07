@@ -7,7 +7,6 @@ import type {
   PricingMode,
 } from "@bidspace/core";
 import type { BidspaceClient, EventRow, InventoryUnitRow, OpportunityRow, OrganizationRow, VenueRow } from "@bidspace/db";
-import { searchNearbyUnits, searchUnitsInViewport, type DiscoveredUnit } from "@bidspace/services";
 import { createServerBidspaceClient } from "./bidspace-server";
 import {
   DEFAULT_RADIUS_CENTER,
@@ -64,6 +63,34 @@ interface VenueRecord extends VenueRow {
   restroom_info: string | null;
   parking_info: string | null;
   image_urls: JsonArray;
+}
+
+interface DiscoveredUnit {
+  id: string;
+  opportunityId: string;
+  organizationId: string;
+  name: string;
+  type: InventoryUnitType;
+  status: InventoryUnitStatus;
+  commerceLayer: CommerceLayer | null;
+  minimumBidCents: number | null;
+  longitude: number;
+  latitude: number;
+  distanceMeters: number;
+}
+
+interface RpcUnitRow {
+  id: string;
+  opportunity_id: string;
+  organization_id: string;
+  name: string;
+  type: InventoryUnitType;
+  status: InventoryUnitStatus;
+  commerce_layer: CommerceLayer | null;
+  minimum_bid_cents: number | null;
+  longitude: number;
+  latitude: number;
+  distance_m: number;
 }
 
 export interface DiscoveryUnitCard {
@@ -133,6 +160,55 @@ export interface DiscoveryResult {
     maxLongitude: number;
   };
   center: { latitude: number; longitude: number };
+}
+
+function mapDiscoveredUnit(row: RpcUnitRow): DiscoveredUnit {
+  return {
+    id: row.id,
+    opportunityId: row.opportunity_id,
+    organizationId: row.organization_id,
+    name: row.name,
+    type: row.type,
+    status: row.status,
+    commerceLayer: row.commerce_layer,
+    minimumBidCents: row.minimum_bid_cents,
+    longitude: row.longitude,
+    latitude: row.latitude,
+    distanceMeters: row.distance_m,
+  };
+}
+
+async function searchNearbyUnits(db: BidspaceClient, filters: DiscoveryFilters): Promise<DiscoveredUnit[]> {
+  const { data, error } = await db.rpc("search_inventory_units", {
+    p_lat: filters.latitude ?? DEFAULT_RADIUS_CENTER.latitude,
+    p_lng: filters.longitude ?? DEFAULT_RADIUS_CENTER.longitude,
+    p_radius_m: radiusMilesToMeters(filters.radiusMiles),
+    p_type: filters.type ?? null,
+    p_commerce_layer: filters.commerceLayer ?? null,
+    p_limit: filters.limit,
+  });
+  if (error) throw new Error(`radius discovery search failed: ${error.message}`);
+  return ((data ?? []) as RpcUnitRow[]).map(mapDiscoveredUnit);
+}
+
+async function searchUnitsInViewport(db: BidspaceClient, filters: DiscoveryFilters): Promise<DiscoveredUnit[]> {
+  const bounds = {
+    minLatitude: filters.minLatitude ?? DEFAULT_VIEWPORT.minLatitude,
+    minLongitude: filters.minLongitude ?? DEFAULT_VIEWPORT.minLongitude,
+    maxLatitude: filters.maxLatitude ?? DEFAULT_VIEWPORT.maxLatitude,
+    maxLongitude: filters.maxLongitude ?? DEFAULT_VIEWPORT.maxLongitude,
+  };
+  const { data, error } = await db.rpc("search_inventory_units_in_bbox", {
+    p_min_lng: bounds.minLongitude,
+    p_min_lat: bounds.minLatitude,
+    p_max_lng: bounds.maxLongitude,
+    p_max_lat: bounds.maxLatitude,
+    p_type: filters.type ?? null,
+    p_commerce_layer: filters.commerceLayer ?? null,
+    p_limit: filters.limit,
+  });
+  if (error) throw new Error(`viewport discovery search failed: ${error.message}`);
+  return ((data ?? []) as RpcUnitRow[]).map(mapDiscoveredUnit);
 }
 
 function buildUnitCard(
@@ -283,20 +359,8 @@ export async function getDiscoveryResult(rawSearchParams: RawSearchParams): Prom
   };
 
   const discoveredUnits = useRadius
-    ? await searchNearbyUnits(db, {
-        latitude: center.latitude,
-        longitude: center.longitude,
-        radiusMeters: radiusMilesToMeters(filters.radiusMiles),
-        type: filters.type,
-        commerceLayer: filters.commerceLayer,
-        limit: filters.limit,
-      })
-    : await searchUnitsInViewport(db, {
-        ...bounds,
-        type: filters.type,
-        commerceLayer: filters.commerceLayer,
-        limit: filters.limit,
-      });
+    ? await searchNearbyUnits(db, filters)
+    : await searchUnitsInViewport(db, filters);
 
   const enrichedUnits = await enrichDiscoveredUnits(db, discoveredUnits);
   const units = filterByQuery(enrichedUnits, filters.q);

@@ -310,6 +310,15 @@ select {
   gap: 10px;
 }
 
+.viewport-fields,
+.card-pill-row {
+  margin-top: 10px;
+}
+
+.card-pill-row {
+  margin-bottom: 10px;
+}
+
 .results-header,
 .card-header,
 .detail-meta {

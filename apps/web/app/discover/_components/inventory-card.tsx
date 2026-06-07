@@ -24,7 +24,7 @@ export function InventoryCard({ unit }: InventoryCardProps) {
     <article className="inventory-card">
       <div className="card-header">
         <div>
-          <div className="pill-row" style= marginBottom: 10 >
+          <div className="pill-row card-pill-row">
             <span className="badge">{UNIT_TYPE_LABELS[unit.type]}</span>
             <span className="status-badge">{formatEnumLabel(unit.status)}</span>
           </div>
