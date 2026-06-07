@@ -31,6 +31,10 @@ Canonical, deduplicated decision log. Supersedes all earlier brainstorming in th
 
 ## Cross-app alignment
 - **D022 — Source-of-truth split & cross-app alignment (2026-06-03).** Adopts the Explore&Earn doctrine across all AutomatedEmpires apps: **Notion holds product & vision truth; this repo holds implementation truth.** On a *product/vision* conflict, Notion decides; on an *implementation* conflict, this repo decides. Partially supersedes D017's blanket "repo wins." Also confirms the cross-app runtime + integration spine (Node 24.16.0, pnpm 10.12.4, Turborepo; Clerk auth, Mapbox maps, Supabase, Stripe Connect, Doppler, Vercel, PostHog, Sentry, Cloudinary) and the shared agent operating contract in `AGENTS.md` / `docs/AGENT-ALIGNMENT-NOTES.md`. `LOCKED`
+- **D023 — Active coding agents: Claude (primary), Copilot (secondary); Codex retired (2026-06-06).** Claude Code Max is the primary builder + reviewer (features, refactors, architecture, review); GitHub Copilot is the secondary, scoped builder (small PRs, VS Code inline) + automated PR review. **Codex is retired as of 2026-06-06.** The builder never approves their own PR (independent review still required per `AGENTS.md`). Updates the AI-coding-agents rows in `docs/INTEGRATIONS.md`. `LOCKED`
+
+## Go-to-market & CRM (candidates)
+- **D024 — HubSpot and Intercom recorded as candidate GTM-phase integrations under evaluation (2026-06-06).** Neither is locked or connected. **HubSpot** is a candidate CRM for the host/bidder organization pipeline + outbound as launch goes region-by-region (D004). **Intercom** is a candidate for in-app support/onboarding messaging once real users exist. Promoting either to the locked registry requires founder sign-off and a new dated decision updating `docs/INTEGRATIONS.md` (per D021). Deferred to avoid pre-user tooling sprawl. Status: **evaluation only.** `LOCKED`
 
 ## Open (must lock before/at relevant phase)
 - **O3 — Multi-unit allocation algorithm** beyond manual host selection. *V2.*

@@ -35,9 +35,10 @@ The approved **third-party service providers** for BidSpace. Build against these
 ## AI coding agents
 | Provider | Role | Notes |
 |---|---|---|
-| **Claude Code Max** | Primary coding agent | Larger feature work / refactors. |
-| **Codex** | Coding agent | Parallel/secondary execution. |
-| **GitHub Copilot** | PR review + small tasks | Automated review before human/agent review. |
+| **Claude Code Max** | Primary coding agent + reviewer | Feature work, refactors, architecture, and PR review. |
+| **GitHub Copilot** | Secondary / scoped builder + PR review | Small scoped PRs, VS Code inline, automated review before human/agent review. |
+
+> **Codex was retired as an active coding agent on 2026-06-06** (see `docs/DECISIONS.md` D023). Active agents are Claude (primary) and Copilot (secondary); the builder never approves their own PR.
 
 ## Design & assets
 | Provider | Role | Notes |
@@ -50,6 +51,14 @@ The approved **third-party service providers** for BidSpace. Build against these
 | Provider | Role | Notes |
 |---|---|---|
 | **Notion (Business)** | Vision log + ops/PM | Founder journal; **the repo is canonical for spec/code** (D017). |
+
+## Candidate providers (under evaluation — NOT locked)
+Not part of the locked registry above and **not connected**. Recorded as GTM-phase candidates pending founder sign-off (see `docs/DECISIONS.md` D024). Promoting either to the locked set requires a new dated decision per D021.
+
+| Candidate | Potential role | Rationale | Gate |
+|---|---|---|---|
+| **HubSpot** | CRM / go-to-market pipeline | Track host & bidder org relationships + outbound as launch goes region-by-region (D004 — go-to-market is dense). | Founder sign-off; defer until a real sales/outreach pipeline exists. |
+| **Intercom** | In-app support / messaging | Support + onboarding messaging once real users are on the platform. | Founder sign-off; defer until users exist (avoid pre-user sprawl). |
 
 ## Standard tooling (assumed, not a provider)
 npm / pnpm · Playwright (e2e) · TypeScript · ESLint + Prettier · Turborepo · Supabase CLI · Stripe CLI. In use across the monorepo; listed here only to record that they are part of the workflow.
