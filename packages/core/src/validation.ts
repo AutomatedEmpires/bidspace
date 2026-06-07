@@ -7,6 +7,10 @@ import {
   INVENTORY_UNIT_TYPE,
   VENUE_TYPE,
   EVENT_TYPE,
+  VENUE_STATUS,
+  EVENT_STATUS,
+  OPPORTUNITY_STATUS,
+  INVENTORY_UNIT_STATUS,
 } from "./enums";
 
 const slug = z
@@ -51,6 +55,22 @@ export const venueCreateSchema = z.object({
 });
 export type VenueCreate = z.infer<typeof venueCreateSchema>;
 
+export const venueUpdateSchema = z.object({
+  name: z.string().min(1).optional(),
+  venueType: z.enum(VENUE_TYPE).optional(),
+  description: z.string().optional(),
+  addressLine1: z.string().min(1).optional(),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1).optional(),
+  state: z.string().min(1).optional(),
+  postalCode: z.string().optional(),
+  country: z.string().min(2).max(2).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  status: z.enum(VENUE_STATUS).optional(),
+});
+export type VenueUpdate = z.infer<typeof venueUpdateSchema>;
+
 export const eventCreateSchema = z
   .object({
     organizationId: z.string().uuid(),
@@ -69,33 +89,113 @@ export const eventCreateSchema = z
   });
 export type EventCreate = z.infer<typeof eventCreateSchema>;
 
-export const opportunityCreateSchema = z.object({
-  organizationId: z.string().uuid(),
-  title: z.string().min(1),
-  venueId: z.string().uuid().optional(),
-  eventId: z.string().uuid().optional(),
-  pricingMode: z.enum(PRICING_MODE).default("hybrid"),
-  commerceLayer: z.enum(COMMERCE_LAYER).optional(),
-  minimumBidCents: z.number().int().nonnegative().optional(),
-  bidDeadline: z.string().datetime().optional(),
-});
+export const eventUpdateSchema = z
+  .object({
+    venueId: z.string().uuid().optional(),
+    name: z.string().min(1).optional(),
+    eventType: z.enum(EVENT_TYPE).optional(),
+    description: z.string().optional(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+    timezone: z.string().optional(),
+    estimatedAttendance: z.number().int().nonnegative().optional(),
+    status: z.enum(EVENT_STATUS).optional(),
+  })
+  .refine((v) => !v.startsAt || !v.endsAt || v.endsAt >= v.startsAt, {
+    message: "endsAt must be on or after startsAt",
+    path: ["endsAt"],
+  });
+export type EventUpdate = z.infer<typeof eventUpdateSchema>;
+
+export const opportunityCreateSchema = z
+  .object({
+    organizationId: z.string().uuid(),
+    title: z.string().min(1),
+    description: z.string().optional(),
+    venueId: z.string().uuid().optional(),
+    eventId: z.string().uuid().optional(),
+    pricingMode: z.enum(PRICING_MODE).default("hybrid"),
+    commerceLayer: z.enum(COMMERCE_LAYER).optional(),
+    minimumBidCents: z.number().int().nonnegative().optional(),
+    bidDeadline: z.string().datetime().optional(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+  })
+  .refine((v) => !v.startsAt || !v.endsAt || v.endsAt >= v.startsAt, {
+    message: "endsAt must be on or after startsAt",
+    path: ["endsAt"],
+  });
 export type OpportunityCreate = z.infer<typeof opportunityCreateSchema>;
 
-export const inventoryUnitCreateSchema = z.object({
-  opportunityId: z.string().uuid(),
-  organizationId: z.string().uuid(),
-  type: z.enum(INVENTORY_UNIT_TYPE),
-  name: z.string().min(1),
-  availabilityStart: z.string().datetime(),
-  availabilityEnd: z.string().datetime(),
-  pricingMode: z.enum(PRICING_MODE).default("hybrid"),
-  minimumBidCents: z.number().int().nonnegative().optional(),
-  buyNowPriceCents: z.number().int().nonnegative().optional(),
-  reservePriceCents: z.number().int().nonnegative().optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
-});
+export const opportunityUpdateSchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    venueId: z.string().uuid().optional(),
+    eventId: z.string().uuid().optional(),
+    pricingMode: z.enum(PRICING_MODE).optional(),
+    commerceLayer: z.enum(COMMERCE_LAYER).optional(),
+    minimumBidCents: z.number().int().nonnegative().optional(),
+    bidDeadline: z.string().datetime().optional(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+    status: z.enum(OPPORTUNITY_STATUS).optional(),
+  })
+  .refine((v) => !v.startsAt || !v.endsAt || v.endsAt >= v.startsAt, {
+    message: "endsAt must be on or after startsAt",
+    path: ["endsAt"],
+  });
+export type OpportunityUpdate = z.infer<typeof opportunityUpdateSchema>;
+
+export const inventoryUnitCreateSchema = z
+  .object({
+    opportunityId: z.string().uuid(),
+    organizationId: z.string().uuid(),
+    venueId: z.string().uuid().optional(),
+    eventId: z.string().uuid().optional(),
+    type: z.enum(INVENTORY_UNIT_TYPE),
+    name: z.string().min(1),
+    commerceLayer: z.enum(COMMERCE_LAYER).optional(),
+    availabilityStart: z.string().datetime(),
+    availabilityEnd: z.string().datetime(),
+    pricingMode: z.enum(PRICING_MODE).default("hybrid"),
+    minimumBidCents: z.number().int().nonnegative().optional(),
+    buyNowPriceCents: z.number().int().nonnegative().optional(),
+    reservePriceCents: z.number().int().nonnegative().optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    notes: z.string().optional(),
+  })
+  .refine((v) => v.availabilityEnd >= v.availabilityStart, {
+    message: "availabilityEnd must be on or after availabilityStart",
+    path: ["availabilityEnd"],
+  });
 export type InventoryUnitCreate = z.infer<typeof inventoryUnitCreateSchema>;
+
+export const inventoryUnitUpdateSchema = z
+  .object({
+    opportunityId: z.string().uuid().optional(),
+    venueId: z.string().uuid().optional(),
+    eventId: z.string().uuid().optional(),
+    type: z.enum(INVENTORY_UNIT_TYPE).optional(),
+    name: z.string().min(1).optional(),
+    commerceLayer: z.enum(COMMERCE_LAYER).optional(),
+    availabilityStart: z.string().datetime().optional(),
+    availabilityEnd: z.string().datetime().optional(),
+    pricingMode: z.enum(PRICING_MODE).optional(),
+    minimumBidCents: z.number().int().nonnegative().optional(),
+    buyNowPriceCents: z.number().int().nonnegative().optional(),
+    reservePriceCents: z.number().int().nonnegative().optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    notes: z.string().optional(),
+    status: z.enum(INVENTORY_UNIT_STATUS).optional(),
+  })
+  .refine((v) => !v.availabilityStart || !v.availabilityEnd || v.availabilityEnd >= v.availabilityStart, {
+    message: "availabilityEnd must be on or after availabilityStart",
+    path: ["availabilityEnd"],
+  });
+export type InventoryUnitUpdate = z.infer<typeof inventoryUnitUpdateSchema>;
 
 export const bidPreferenceSchema = z.object({
   inventoryUnitId: z.string().uuid().optional(),

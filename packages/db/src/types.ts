@@ -7,6 +7,7 @@ import type {
   MarketplaceRoleType,
   VerificationStatus,
   VenueType,
+  VenueStatus,
   CommerceLayer,
   PricingMode,
   EventType,
@@ -77,15 +78,18 @@ export interface VenueRow {
   id: string;
   organization_id: string;
   name: string;
+  slug: string | null;
   venue_type: VenueType;
+  description: string | null;
   address_line_1: string;
   address_line_2: string | null;
   city: string;
   state: string;
   postal_code: string | null;
   country: string;
-  // PostGIS geography(Point,4326) is exposed as GeoJSON over the API.
   location: GeoPoint | null;
+  status: VenueStatus;
+  verification_status: VerificationStatus;
   created_at: string;
   updated_at: string;
 }
@@ -95,11 +99,14 @@ export interface EventRow {
   organization_id: string;
   venue_id: string | null;
   name: string;
+  slug: string | null;
   event_type: EventType;
+  description: string | null;
   status: EventStatus;
   starts_at: string;
   ends_at: string;
   timezone: string | null;
+  estimated_attendance: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -109,12 +116,17 @@ export interface OpportunityRow {
   organization_id: string;
   venue_id: string | null;
   event_id: string | null;
+  collection_id: string | null;
   title: string;
+  slug: string | null;
+  description: string | null;
   status: OpportunityStatus;
   pricing_mode: PricingMode;
   commerce_layer: CommerceLayer | null;
   minimum_bid_cents: number | null;
   bid_deadline: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -123,9 +135,14 @@ export interface InventoryUnitRow {
   id: string;
   opportunity_id: string;
   organization_id: string;
+  venue_id: string | null;
+  event_id: string | null;
+  zone_id: string | null;
+  collection_id: string | null;
   type: InventoryUnitType;
   status: InventoryUnitStatus;
   name: string;
+  commerce_layer: CommerceLayer | null;
   pricing_mode: PricingMode;
   minimum_bid_cents: number | null;
   buy_now_price_cents: number | null;
@@ -133,6 +150,15 @@ export interface InventoryUnitRow {
   availability_start: string;
   availability_end: string;
   location: GeoPoint | null;
+  dimensions: string | null;
+  indoor: boolean | null;
+  power_available: boolean | null;
+  water_available: boolean | null;
+  wifi_available: boolean | null;
+  vehicle_access: boolean | null;
+  setup_window: string | null;
+  teardown_window: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
