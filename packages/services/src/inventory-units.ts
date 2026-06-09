@@ -6,8 +6,8 @@ import {
   inventoryUnitStatusTransitions,
   canTransition,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { toGeoPoint } from "./geo.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { toGeoPoint } from "./geo";
 
 export async function createInventoryUnit(
   db: BidspaceClient,
