@@ -7,7 +7,7 @@ import {
   INVENTORY_UNIT_TYPE,
   VENUE_TYPE,
   EVENT_TYPE,
-} from "./enums";
+} from "./enums.js";
 
 const slug = z
   .string()
