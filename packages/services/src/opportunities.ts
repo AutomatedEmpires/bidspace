@@ -6,7 +6,7 @@ import {
   opportunityStatusTransitions,
   canTransition,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
 
 export async function createOpportunity(
   db: BidspaceClient,

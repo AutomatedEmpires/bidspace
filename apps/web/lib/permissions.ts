@@ -1,6 +1,10 @@
-import type { OrganizationMemberRole } from "@bidspace/core";
+import type { MarketplaceRoleType, OrganizationMemberRole } from "@bidspace/core";
 
 const ROLE_PRIORITY = ["viewer", "member", "manager", "admin", "owner"] as const;
+
+export interface MarketplaceRoleProfileLike {
+  role_type: MarketplaceRoleType;
+}
 
 export function hasOrgRole(requiredRole: OrganizationMemberRole, actualRole: string | null | undefined): boolean {
   const normalizedRole = normalizeMembershipRole(actualRole);
@@ -22,4 +26,11 @@ export function normalizeMembershipRole(role: string | null | undefined): Organi
   }
 
   return null;
+}
+
+export function hasMarketplaceRole(
+  requiredRole: MarketplaceRoleType,
+  roleProfiles: readonly MarketplaceRoleProfileLike[],
+): boolean {
+  return roleProfiles.some((profile) => profile.role_type === requiredRole);
 }

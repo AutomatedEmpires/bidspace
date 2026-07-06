@@ -1,6 +1,6 @@
 import type { BidspaceClient, EventRow } from "@bidspace/db";
 import { eventCreateSchema, type EventCreate, type EventStatus } from "@bidspace/core";
-import { NotFoundError, ValidationError, fromDbError } from "./errors.js";
+import { NotFoundError, ValidationError, fromDbError } from "./errors";
 
 export async function createEvent(db: BidspaceClient, input: EventCreate): Promise<EventRow> {
   const parsed = eventCreateSchema.safeParse(input);

@@ -1,8 +1,8 @@
 import type { BidspaceClient, BookingRow } from "@bidspace/db";
 import { type BookingStatus, bookingStatusTransitions, canTransition } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getBid, transitionBid } from "./bidding.js";
-import { getInventoryUnit } from "./inventory-units.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getBid, transitionBid } from "./bidding";
+import { getInventoryUnit } from "./inventory-units";
 
 // A booking is created in `pending_payment` as soon as a host moves an accepted
 // bid into payment, then advances to `confirmed` once payment settles. Creating

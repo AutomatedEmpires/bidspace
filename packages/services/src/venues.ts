@@ -1,7 +1,7 @@
 import type { BidspaceClient, VenueRow } from "@bidspace/db";
 import { venueCreateSchema, type VenueCreate } from "@bidspace/core";
-import { NotFoundError, ValidationError, fromDbError } from "./errors.js";
-import { toGeoPoint } from "./geo.js";
+import { NotFoundError, ValidationError, fromDbError } from "./errors";
+import { toGeoPoint } from "./geo";
 
 export async function createVenue(db: BidspaceClient, input: VenueCreate): Promise<VenueRow> {
   const parsed = venueCreateSchema.safeParse(input);

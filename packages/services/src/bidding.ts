@@ -1,4 +1,4 @@
-import type { BidspaceClient, BidRow } from "@bidspace/db";
+import type { BidspaceClient, BidRow, InventoryUnitRow } from "@bidspace/db";
 import {
   bidCreateSchema,
   type BidCreate,
@@ -7,9 +7,9 @@ import {
   bidStatusTransitions,
   canTransition,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getOpportunity } from "./opportunities.js";
-import { getInventoryUnit } from "./inventory-units.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getOpportunity } from "./opportunities";
+import { getInventoryUnit } from "./inventory-units";
 
 // Pure, persistence-free guard for whether a bid may be placed.
 export interface BidEligibilityInput {
@@ -51,6 +51,19 @@ export function visibleBidsFor<T extends { bidder_organization_id: string }>(
   return bids.filter((b) => b.bidder_organization_id === viewer.organizationId);
 }
 
+export function assertBidTargetsUnitOpportunity(
+  opportunityId: string,
+  inventoryUnit: Pick<InventoryUnitRow, "id" | "opportunity_id">,
+): void {
+  if (inventoryUnit.opportunity_id === opportunityId) {
+    return;
+  }
+
+  throw new ValidationError(
+    `Inventory unit ${inventoryUnit.id} does not belong to opportunity ${opportunityId}`,
+  );
+}
+
 // Place a bid against an opportunity (and optionally a specific inventory unit).
 // Bids are created `submitted` and sealed by default (D019).
 export async function placeBid(db: BidspaceClient, input: BidCreate): Promise<BidRow> {
@@ -65,6 +78,7 @@ export async function placeBid(db: BidspaceClient, input: BidCreate): Promise<Bi
   let minimumBidCents = opportunity.minimum_bid_cents;
   if (b.inventoryUnitId) {
     const unit = await getInventoryUnit(db, b.inventoryUnitId);
+    assertBidTargetsUnitOpportunity(b.opportunityId, unit);
     minimumBidCents = unit.minimum_bid_cents ?? opportunity.minimum_bid_cents;
   }
   assertBidAcceptable({

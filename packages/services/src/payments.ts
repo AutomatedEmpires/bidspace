@@ -7,8 +7,8 @@ import {
   hostPayoutCents,
   DEFAULT_PLATFORM_FEE_BPS,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getBooking } from "./booking.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getBooking } from "./booking";
 
 // --- Money split (D018: 10% platform commission; D020: integer cents) ---
 export interface PaymentSplit {

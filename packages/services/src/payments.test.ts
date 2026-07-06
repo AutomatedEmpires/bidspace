@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitPayment, buildConnectChargeParams } from "./payments.js";
-import { ValidationError } from "./errors.js";
+import { splitPayment, buildConnectChargeParams } from "./payments";
+import { ValidationError } from "./errors";
 
 test("splitPayment applies the locked 10% platform fee (D018)", () => {
   const split = splitPayment(10_000);
