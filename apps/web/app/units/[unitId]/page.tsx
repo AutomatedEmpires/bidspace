@@ -17,7 +17,7 @@ import {
   DEFAULT_MINIMUM_BID_CENTS,
   getBidAvailabilityError,
 } from "@/lib/bid-form";
-import { hasOrgRole } from "@/lib/permissions";
+import { hasMarketplaceRole, hasOrgRole } from "@/lib/permissions";
 import { BidSubmissionForm, type BidFormState } from "./bid-form";
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
@@ -25,7 +25,7 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
 });
 
-type ActiveBidderContext = NonNullable<Awaited<ReturnType<typeof getCurrentUserOrgContext>>> & {
+type ActiveOrgContext = NonNullable<Awaited<ReturnType<typeof getCurrentUserOrgContext>>> & {
   activeClerkOrganizationId: string;
   activeDbOrganizationId: string;
 };
@@ -38,7 +38,13 @@ function renderPrice(value: number | null): string {
   return value == null ? "Not set" : formatMoney(value);
 }
 
-async function requireActiveBidderContext(): Promise<ActiveBidderContext> {
+function getBidderRoleError(roleProfiles: Parameters<typeof hasMarketplaceRole>[1]): string | null {
+  return hasMarketplaceRole("bidder", roleProfiles)
+    ? null
+    : "Complete onboarding with a bidder role before submitting bids.";
+}
+
+async function requireActiveOrgContext(): Promise<ActiveOrgContext> {
   const context = await getCurrentUserOrgContext();
   if (!context) {
     redirect("/sign-in");
@@ -50,18 +56,20 @@ async function requireActiveBidderContext(): Promise<ActiveBidderContext> {
   ) {
     redirect("/onboarding");
   }
-  return context as ActiveBidderContext;
+  return context as ActiveOrgContext;
 }
 
-async function getUnitContext(opportunity: OpportunityRow): Promise<{
+async function getUnitContext(unitVenueId: string | null, unitEventId: string | null, opportunity: OpportunityRow): Promise<{
   venue: VenueRow | null;
   event: EventRow | null;
 }> {
   const db = createServerBidspaceClient();
+  const venueId = unitVenueId ?? opportunity.venue_id;
+  const eventId = unitEventId ?? opportunity.event_id;
 
   let venue: VenueRow | null = null;
-  if (opportunity.venue_id) {
-    const venueResult = await db.from("venues").select("*").eq("id", opportunity.venue_id).maybeSingle();
+  if (venueId) {
+    const venueResult = await db.from("venues").select("*").eq("id", venueId).maybeSingle();
     if (venueResult.error) {
       throw venueResult.error;
     }
@@ -69,8 +77,8 @@ async function getUnitContext(opportunity: OpportunityRow): Promise<{
   }
 
   let event: EventRow | null = null;
-  if (opportunity.event_id) {
-    const eventResult = await db.from("events").select("*").eq("id", opportunity.event_id).maybeSingle();
+  if (eventId) {
+    const eventResult = await db.from("events").select("*").eq("id", eventId).maybeSingle();
     if (eventResult.error) {
       throw eventResult.error;
     }
@@ -97,16 +105,17 @@ export default async function UnitDetailPage({
 }: {
   params: Promise<{ unitId: string }>;
 }) {
-  const context = await requireActiveBidderContext();
+  const context = await requireActiveOrgContext();
 
   const { unitId } = await params;
   const db = createServerBidspaceClient();
   const unit = await getUnitOrNotFound(unitId);
 
   const opportunity = await getOpportunity(db, unit.opportunity_id);
-  const { venue, event } = await getUnitContext(opportunity);
+  const { venue, event } = await getUnitContext(unit.venue_id, unit.event_id, opportunity);
   const minimumBidCents = unit.minimum_bid_cents ?? opportunity.minimum_bid_cents;
-  const bidAvailabilityError = getBidAvailabilityError(opportunity.status, minimumBidCents);
+  const bidAvailabilityError =
+    getBidderRoleError(context.roleProfiles) ?? getBidAvailabilityError(opportunity.status, minimumBidCents);
   const yourBids = (await listBidsForOpportunity(db, opportunity.id, {
     organizationId: context.activeDbOrganizationId,
     isHost: false,
@@ -117,9 +126,14 @@ export default async function UnitDetailPage({
   async function submitBidAction(_state: BidFormState, formData: FormData): Promise<BidFormState> {
     "use server";
 
-    const currentContext = await requireActiveBidderContext();
+    const currentContext = await requireActiveOrgContext();
 
     try {
+      const bidderRoleError = getBidderRoleError(currentContext.roleProfiles);
+      if (bidderRoleError) {
+        return { status: "error", message: bidderRoleError };
+      }
+
       const serverDb = createServerBidspaceClient();
       const currentUnit = await getInventoryUnit(serverDb, unitId);
       const bidInput = buildBidCreateInput({

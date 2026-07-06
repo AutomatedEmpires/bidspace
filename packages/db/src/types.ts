@@ -123,9 +123,12 @@ export interface InventoryUnitRow {
   id: string;
   opportunity_id: string;
   organization_id: string;
+  venue_id: string | null;
+  event_id: string | null;
   type: InventoryUnitType;
   status: InventoryUnitStatus;
   name: string;
+  commerce_layer: CommerceLayer | null;
   pricing_mode: PricingMode;
   minimum_bid_cents: number | null;
   buy_now_price_cents: number | null;

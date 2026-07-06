@@ -82,7 +82,7 @@ If `pnpm` warns that the `supabase` binary was not linked because build scripts 
 | `pnpm test` | none | Root `pnpm test` runs the real `@bidspace/core`, `@bidspace/services`, and `@bidspace/web` suites via Turbo. |
 | `pnpm build` | none today | `apps/web/lib/env.ts` returns build-only Clerk placeholders during `next build`, so CI can verify builds without live secrets. This does not make runtime safe. |
 | Web dev server process boot | none to start the process | `next dev` can start, but the first request still needs real Clerk runtime env. |
-| First page request (`/`, `/sign-in`, `/sign-up`) | `CLERK_PUBLISHABLE_KEY` or `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `CLERK_SECRET_KEY` | `apps/web/app/layout.tsx` and `apps/web/middleware.ts` read Clerk env at runtime. Missing values produce a deliberate developer-facing error. |
+| First page request (`/`, `/sign-in`, `/sign-up`) | `CLERK_PUBLISHABLE_KEY` or `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `CLERK_SECRET_KEY` | `apps/web/app/layout.tsx` and `apps/web/proxy.ts` read Clerk env at runtime. Missing values produce a deliberate developer-facing error. |
 | Authenticated/product routes (`/onboarding`, `/dashboard`) | Clerk vars above, plus `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` | These routes also require server-side Supabase access through `apps/web/lib/bidspace-server.ts`. |
 | Auth flows | `CLERK_PUBLISHABLE_KEY` or `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `CLERK_SECRET_KEY` | Required for Clerk UI, middleware protection, and session resolution. |
 | Supabase / DB tooling | `DATABASE_URL` | Needed for `psql`/migration commands; `pnpm --filter @bidspace/db gen:types` also needs a working `supabase` CLI. |
