@@ -2,7 +2,20 @@ import type { ClerkMiddlewareAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PATH_PREFIXES = ["/dashboard", "/onboarding"] as const;
+// Default-public: marketing and discovery surfaces never require a session.
+// Only the cockpit + onboarding prefixes force sign-in.
+const PROTECTED_PATH_PREFIXES = [
+  "/dashboard",
+  "/onboarding",
+  "/host",
+  "/admin",
+  "/bids",
+  "/bookings",
+  "/saved",
+  "/business",
+  "/messages",
+  "/discover",
+] as const;
 
 export function isProtectedRequest(request: NextRequest): boolean {
   const pathname = request.nextUrl.pathname;
