@@ -19,7 +19,6 @@ import {
   PanelBody,
   PanelHeader,
   StatusBadge,
-  buttonClasses,
 } from "@bidspace/ui";
 import { getCurrentUserOrgContext } from "@/lib/auth-context";
 import { createServerBidspaceClient } from "@/lib/bidspace-server";

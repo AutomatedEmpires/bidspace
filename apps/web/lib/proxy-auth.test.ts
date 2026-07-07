@@ -21,11 +21,20 @@ function createRequest(pathname: string) {
   return new NextRequest(`https://bidspace.local${pathname}`);
 }
 
-test("matches protected dashboard and onboarding routes with native pathname checks", () => {
+test("matches protected cockpit routes with native pathname checks", () => {
   assert.equal(isProtectedRequest(createRequest("/dashboard")), true);
   assert.equal(isProtectedRequest(createRequest("/dashboard/settings")), true);
   assert.equal(isProtectedRequest(createRequest("/onboarding/complete")), true);
-  assert.equal(isProtectedRequest(createRequest("/discover")), false);
+  assert.equal(isProtectedRequest(createRequest("/host/opportunities/abc")), true);
+  assert.equal(isProtectedRequest(createRequest("/admin")), true);
+  assert.equal(isProtectedRequest(createRequest("/bids")), true);
+  assert.equal(isProtectedRequest(createRequest("/discover")), true);
+  // Public marketplace stays public.
+  assert.equal(isProtectedRequest(createRequest("/")), false);
+  assert.equal(isProtectedRequest(createRequest("/explore")), false);
+  assert.equal(isProtectedRequest(createRequest("/map")), false);
+  assert.equal(isProtectedRequest(createRequest("/opportunities/summer-market-9f3a21c4")), false);
+  assert.equal(isProtectedRequest(createRequest("/hosts/spokane-fair")), false);
 });
 
 test("protects dashboard requests and forwards org id", async () => {
@@ -41,7 +50,7 @@ test("protects dashboard requests and forwards org id", async () => {
 
 test("skips auth protection for public discovery requests", async () => {
   const auth = createAuth(null);
-  const request = createRequest("/discover");
+  const request = createRequest("/explore");
 
   const response = await handleProxyAuth(auth, request);
 

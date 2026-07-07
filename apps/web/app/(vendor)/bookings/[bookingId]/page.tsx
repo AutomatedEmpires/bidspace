@@ -10,7 +10,6 @@ import {
   getInventoryUnit,
   getOrCreateThread,
   initiateBookingPayment,
-  listMessages,
   listReviewsForOrganization,
   splitPayment,
   submitReview,

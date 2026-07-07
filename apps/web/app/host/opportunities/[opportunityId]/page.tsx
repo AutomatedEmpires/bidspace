@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { COMMERCE_LAYER, INVENTORY_UNIT_TYPE, formatMoney, toCents } from "@bidspace/core";
+import { INVENTORY_UNIT_TYPE, formatMoney, toCents } from "@bidspace/core";
 import {
   NotFoundError,
   ServiceError,
