@@ -11,6 +11,7 @@ import {
 import type { PaymentRow } from "@bidspace/db";
 import { getStripe, isStripeEnabled } from "@/lib/stripe";
 import { tryGetDb } from "@/lib/safe-db";
+import { captureServerEvent } from "@/lib/analytics-server";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,10 @@ export async function POST(request: NextRequest) {
         const booking = await getBooking(db, bookingId);
         if (booking.status === "pending_payment") {
           await settleBookingPayment(db, bookingId);
+          captureServerEvent("booking_paid", booking.bidder_organization_id, {
+            booking_id: booking.id,
+            price_cents: booking.price_cents,
+          });
           // Advance the unit to booked along whichever legal path it is on.
           try {
             await transitionInventoryUnit(db, booking.inventory_unit_id, "booked");

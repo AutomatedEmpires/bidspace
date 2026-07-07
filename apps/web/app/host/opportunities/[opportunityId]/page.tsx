@@ -9,6 +9,7 @@ import {
   TransitionError,
   ValidationError,
   createInventoryUnit,
+  duplicateOpportunityForWindow,
   getOpportunity,
   inviteToOpportunity,
   listBidsForOpportunity,
@@ -19,7 +20,9 @@ import {
   transitionInventoryUnit,
   transitionOpportunity,
   updateInventoryUnit,
+  updateOpportunity,
 } from "@bidspace/services";
+import { captureServerEvent } from "@/lib/analytics-server";
 import type { OrganizationRow } from "@bidspace/db";
 import {
   Badge,
@@ -100,6 +103,10 @@ export default async function ManageOpportunityPage({
     try {
       if (target === "published") {
         await publishOpportunity(serverDb, opportunityId);
+        captureServerEvent("opportunity_published", current.activeDbOrganizationId, {
+          opportunity_id: opportunityId,
+          visibility: existing.visibility,
+        });
       } else if (["receiving_bids", "closed", "cancelled", "filled", "completed"].includes(target)) {
         await transitionOpportunity(serverDb, opportunityId, target as never);
         if (target === "receiving_bids") {
@@ -184,6 +191,82 @@ export default async function ManageOpportunityPage({
       throw error;
     }
     revalidatePath(manageUrl);
+  }
+
+  async function editAction(formData: FormData) {
+    "use server";
+    const current = await requireHostContext();
+    const serverDb = tryGetDb();
+    if (!serverDb) return;
+    const existing = await getOpportunity(serverDb, opportunityId);
+    if (existing.organization_id !== current.activeDbOrganizationId) return;
+
+    const value = (key: string) => String(formData.get(key) ?? "").trim();
+    const isDraft = existing.status === "draft";
+    try {
+      const tags = value("categoryTags")
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+      // Published listings only accept the fields that do not rewrite what
+      // bidders already agreed to look at (terms, window, visibility stay).
+      await updateOpportunity(serverDb, opportunityId, {
+        description: value("description") || undefined,
+        audienceProfile: value("audienceProfile") || undefined,
+        estimatedAttendance: value("estimatedAttendance") ? Number(value("estimatedAttendance")) : undefined,
+        categoryTags: tags.length ? tags : undefined,
+        bidDeadline: value("bidDeadline") ? new Date(value("bidDeadline")).toISOString() : undefined,
+        ...(isDraft
+          ? {
+              title: value("title") || undefined,
+              visibility: (value("visibility") || undefined) as "public" | "network" | "invite_only" | undefined,
+              minimumBidCents: value("minimumBidDollars") ? toCents(Number(value("minimumBidDollars"))) : undefined,
+              startsAt: value("startsAt") ? new Date(value("startsAt")).toISOString() : undefined,
+              endsAt: value("endsAt") ? new Date(value("endsAt")).toISOString() : undefined,
+            }
+          : {}),
+      });
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        redirect(`${manageUrl}?error=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    revalidatePath(manageUrl);
+  }
+
+  async function duplicateAction(formData: FormData) {
+    "use server";
+    const current = await requireHostContext();
+    const serverDb = tryGetDb();
+    if (!serverDb) return;
+    const existing = await getOpportunity(serverDb, opportunityId);
+    if (existing.organization_id !== current.activeDbOrganizationId) return;
+
+    const value = (key: string) => String(formData.get(key) ?? "").trim();
+    if (!value("startsAt") || !value("endsAt")) {
+      redirect(`${manageUrl}?error=${encodeURIComponent("Pick the new operating window first.")}`);
+    }
+    let cloneId: string;
+    try {
+      const clone = await duplicateOpportunityForWindow(serverDb, opportunityId, {
+        startsAt: new Date(value("startsAt")).toISOString(),
+        endsAt: new Date(value("endsAt")).toISOString(),
+        bidDeadline: value("bidDeadline") ? new Date(value("bidDeadline")).toISOString() : undefined,
+        title: value("title") || undefined,
+      });
+      cloneId = clone.id;
+      captureServerEvent("opportunity_duplicated", current.activeDbOrganizationId, {
+        source_opportunity_id: opportunityId,
+        clone_opportunity_id: clone.id,
+      });
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        redirect(`${manageUrl}?error=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/host/opportunities/${cloneId}`);
   }
 
   async function inviteAction(formData: FormData) {
@@ -456,6 +539,120 @@ export default async function ManageOpportunityPage({
               to send direct invitations.
             </p>
           )}
+        </PanelBody>
+      </Panel>
+
+      {/* EDIT */}
+      <Panel>
+        <PanelHeader
+          title="Edit release"
+          kicker={
+            opportunity.status === "draft"
+              ? "Draft — everything is editable"
+              : "Live — terms, window, and visibility are locked for fairness"
+          }
+        />
+        <PanelBody>
+          <form action={editAction} className="grid gap-4">
+            {opportunity.status === "draft" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Title" htmlFor="edit-title">
+                  <Input id="edit-title" name="title" defaultValue={opportunity.title} />
+                </Field>
+                <Field label="Who can see it" htmlFor="edit-visibility">
+                  <Select id="edit-visibility" name="visibility" defaultValue={opportunity.visibility}>
+                    <option value="public">Public marketplace</option>
+                    <option value="network">My vendor network</option>
+                    <option value="invite_only">Invited vendors only</option>
+                  </Select>
+                </Field>
+              </div>
+            ) : null}
+            <Field label="Description" htmlFor="edit-description">
+              <Textarea id="edit-description" name="description" rows={4} defaultValue={opportunity.description ?? ""} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Audience profile" htmlFor="edit-audience">
+                <Input id="edit-audience" name="audienceProfile" defaultValue={opportunity.audience_profile ?? ""} />
+              </Field>
+              <Field label="Expected attendance" htmlFor="edit-attendance">
+                <Input
+                  id="edit-attendance"
+                  name="estimatedAttendance"
+                  type="number"
+                  min={0}
+                  defaultValue={opportunity.estimated_attendance ?? ""}
+                />
+              </Field>
+              <Field label="Submission deadline" htmlFor="edit-deadline">
+                <Input id="edit-deadline" name="bidDeadline" type="datetime-local" />
+              </Field>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Vendor categories" htmlFor="edit-tags" hint="Comma-separated">
+                <Input id="edit-tags" name="categoryTags" defaultValue={opportunity.category_tags.join(", ")} />
+              </Field>
+              {opportunity.status === "draft" ? (
+                <>
+                  <Field label="Floor price (USD)" htmlFor="edit-min">
+                    <Input
+                      id="edit-min"
+                      name="minimumBidDollars"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      defaultValue={opportunity.minimum_bid_cents != null ? (opportunity.minimum_bid_cents / 100).toFixed(2) : ""}
+                    />
+                  </Field>
+                  <div className="grid gap-4">
+                    <Field label="Window starts" htmlFor="edit-starts">
+                      <Input id="edit-starts" name="startsAt" type="datetime-local" />
+                    </Field>
+                  </div>
+                </>
+              ) : null}
+            </div>
+            {opportunity.status === "draft" ? (
+              <Field label="Window ends" htmlFor="edit-ends" className="sm:max-w-xs">
+                <Input id="edit-ends" name="endsAt" type="datetime-local" />
+              </Field>
+            ) : null}
+            <Button type="submit" variant="primary" size="md" className="justify-self-start">
+              Save changes
+            </Button>
+          </form>
+        </PanelBody>
+      </Panel>
+
+      {/* RUN IT AGAIN */}
+      <Panel>
+        <PanelHeader
+          title="Run it again"
+          kicker="Recurring supply — clone this release and its positions onto new dates"
+        />
+        <PanelBody>
+          <form action={duplicateAction} className="grid gap-4 sm:grid-cols-[1fr_220px_220px_220px_auto]">
+            <Field label="New title (optional)" htmlFor="dup-title">
+              <Input id="dup-title" name="title" placeholder={opportunity.title} />
+            </Field>
+            <Field label="New window starts" htmlFor="dup-starts" required>
+              <Input id="dup-starts" name="startsAt" type="datetime-local" required />
+            </Field>
+            <Field label="New window ends" htmlFor="dup-ends" required>
+              <Input id="dup-ends" name="endsAt" type="datetime-local" required />
+            </Field>
+            <Field label="New deadline" htmlFor="dup-deadline">
+              <Input id="dup-deadline" name="bidDeadline" type="datetime-local" />
+            </Field>
+            <Button type="submit" variant="secondary" size="md" className="self-end">
+              <Icon name="repeat" size={16} />
+              Create draft copy
+            </Button>
+          </form>
+          <p className="mt-3 text-xs text-ink-muted dark:text-canvas-muted">
+            Positions, terms, requirements, and visibility carry over; unit availability shifts
+            with the new window. The copy stays a draft until you publish it.
+          </p>
         </PanelBody>
       </Panel>
     </div>

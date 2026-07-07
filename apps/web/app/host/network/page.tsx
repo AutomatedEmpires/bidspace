@@ -22,6 +22,7 @@ import {
 } from "@bidspace/ui";
 import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
+import { captureServerEvent } from "@/lib/analytics-server";
 
 export const metadata: Metadata = { title: "Vendor network" };
 export const dynamic = "force-dynamic";
@@ -66,6 +67,9 @@ export default async function HostNetworkPage() {
         hostOrganizationId: current.activeDbOrganizationId,
         vendorOrganizationId,
         note: String(formData.get("note") ?? "").trim() || undefined,
+      });
+      captureServerEvent("network_invited", current.activeDbOrganizationId, {
+        vendor_organization_id: vendorOrganizationId,
       });
     } catch (error) {
       if (!(error instanceof ServiceError)) throw error;

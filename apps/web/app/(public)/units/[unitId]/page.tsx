@@ -29,6 +29,7 @@ import {
 } from "@/lib/bid-form";
 import { hasMarketplaceRole, hasOrgRole } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
+import { captureServerEvent } from "@/lib/analytics-server";
 import { BidSubmissionForm, type BidFormState } from "./bid-form";
 
 type ActiveOrgContext = NonNullable<Awaited<ReturnType<typeof getCurrentUserOrgContext>>> & {
@@ -143,7 +144,13 @@ export default async function UnitDetailPage({
         intendedUse: formData.get("intendedUse") as string | null,
       });
 
-      await placeBid(serverDb, bidInput);
+      const placed = await placeBid(serverDb, bidInput);
+      captureServerEvent("bid_submitted", currentContext.activeDbOrganizationId, {
+        bid_id: placed.id,
+        opportunity_id: placed.opportunity_id,
+        inventory_unit_id: placed.inventory_unit_id,
+        amount_cents: placed.amount_cents,
+      });
       revalidatePath(`/units/${unitId}`);
       return { status: "success", message: "Bid submitted. The host reviews and selects — watch your Bids page." };
     } catch (error) {

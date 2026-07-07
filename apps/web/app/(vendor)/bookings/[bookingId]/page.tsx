@@ -34,6 +34,7 @@ import { requireVendorContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateRange, formatDateTime } from "@/lib/format";
 import { createBookingCheckoutSession, isStripeEnabled } from "@/lib/stripe";
+import { captureServerEvent } from "@/lib/analytics-server";
 
 export const metadata: Metadata = { title: "Booking" };
 export const dynamic = "force-dynamic";
@@ -146,13 +147,18 @@ export default async function VendorBookingDetailPage({
     const serverDb = tryGetDb();
     if (!serverDb) return;
     try {
-      await submitReview(serverDb, {
+      const review = await submitReview(serverDb, {
         bookingId,
         reviewerOrganizationId: current.activeDbOrganizationId,
         reviewedOrganizationId: booking!.host_organization_id,
         rating: Number(formData.get("rating") ?? 0),
         writtenFeedback: String(formData.get("feedback") ?? "").trim() || undefined,
         wouldBookAgain: formData.get("rebook") === "on",
+      });
+      captureServerEvent("review_submitted", current.activeDbOrganizationId, {
+        booking_id: bookingId,
+        review_id: review.id,
+        direction: "vendor_reviews_host",
       });
     } catch (error) {
       if (!(error instanceof ServiceError)) throw error;

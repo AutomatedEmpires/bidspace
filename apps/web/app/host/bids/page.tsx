@@ -34,6 +34,7 @@ import {
 import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateTime } from "@/lib/format";
+import { captureServerEvent } from "@/lib/analytics-server";
 
 export const metadata: Metadata = { title: "Bid review" };
 export const dynamic = "force-dynamic";
@@ -113,6 +114,11 @@ export default async function HostBidReviewPage({
           await requestBidPayment(serverDb, bidId);
           const booking = await createBookingForBid(serverDb, bidId);
           await initiateBookingPayment(serverDb, { bookingId: booking.id });
+          captureServerEvent("bid_awarded", owned.current.activeDbOrganizationId, {
+            bid_id: bidId,
+            booking_id: booking.id,
+            price_cents: booking.price_cents,
+          });
           if (bid.inventory_unit_id) {
             try {
               await transitionInventoryUnit(serverDb, bid.inventory_unit_id, "reserved");
