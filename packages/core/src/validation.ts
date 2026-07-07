@@ -115,3 +115,101 @@ export const bidCreateSchema = z.object({
   preferences: z.array(bidPreferenceSchema).optional(),
 });
 export type BidCreate = z.infer<typeof bidCreateSchema>;
+
+// --- Update / network-layer schemas ---
+
+export const opportunityUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(8000).optional(),
+  audienceProfile: z.string().max(2000).optional(),
+  estimatedAttendance: z.number().int().nonnegative().optional(),
+  categoryTags: z.array(z.string().min(1).max(60)).max(20).optional(),
+  startsAt: z.string().datetime().optional(),
+  endsAt: z.string().datetime().optional(),
+  visibility: z.enum(["public", "network", "invite_only"]).optional(),
+  pricingMode: z.enum(PRICING_MODE).optional(),
+  commerceLayer: z.enum(COMMERCE_LAYER).optional(),
+  minimumBidCents: z.number().int().nonnegative().nullable().optional(),
+  bidDeadline: z.string().datetime().nullable().optional(),
+  imageUrls: z.array(z.string().url()).max(12).optional(),
+});
+export type OpportunityUpdate = z.infer<typeof opportunityUpdateSchema>;
+
+export const inventoryUnitUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  dimensions: z.string().max(120).optional(),
+  indoor: z.boolean().optional(),
+  powerAvailable: z.boolean().optional(),
+  waterAvailable: z.boolean().optional(),
+  wifiAvailable: z.boolean().optional(),
+  vehicleAccess: z.boolean().optional(),
+  setupWindow: z.string().max(300).optional(),
+  teardownWindow: z.string().max(300).optional(),
+  requiredDocuments: z.array(z.string().min(1).max(60)).max(12).optional(),
+  categoryRestrictions: z.array(z.string().min(1).max(60)).max(20).optional(),
+  notes: z.string().max(4000).optional(),
+  minimumBidCents: z.number().int().nonnegative().nullable().optional(),
+  buyNowPriceCents: z.number().int().nonnegative().nullable().optional(),
+});
+export type InventoryUnitUpdate = z.infer<typeof inventoryUnitUpdateSchema>;
+
+export const venueUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(8000).optional(),
+  capacity: z.number().int().nonnegative().optional(),
+  parkingInfo: z.string().max(2000).optional(),
+  powerAvailable: z.boolean().optional(),
+  waterAvailable: z.boolean().optional(),
+  wifiAvailable: z.boolean().optional(),
+  restroomInfo: z.string().max(2000).optional(),
+  accessInstructions: z.string().max(4000).optional(),
+  imageUrls: z.array(z.string().url()).max(12).optional(),
+});
+export type VenueUpdate = z.infer<typeof venueUpdateSchema>;
+
+export const roleProfileUpdateSchema = z.object({
+  displayName: z.string().min(1).max(200).optional(),
+  slug: slug.optional(),
+  bio: z.string().max(4000).optional(),
+  categoryTags: z.array(z.string().min(1).max(60)).max(20).optional(),
+  galleryUrls: z.array(z.string().url()).max(24).optional(),
+  serviceRadiusMiles: z.number().int().positive().max(5000).optional(),
+  commerceLayers: z.array(z.enum(COMMERCE_LAYER)).optional(),
+});
+export type RoleProfileUpdate = z.infer<typeof roleProfileUpdateSchema>;
+
+export const networkInviteSchema = z.object({
+  hostOrganizationId: z.string().uuid(),
+  vendorOrganizationId: z.string().uuid(),
+  note: z.string().max(1000).optional(),
+});
+export type NetworkInvite = z.infer<typeof networkInviteSchema>;
+
+export const opportunityInviteSchema = z.object({
+  opportunityId: z.string().uuid(),
+  vendorOrganizationId: z.string().uuid(),
+  message: z.string().max(2000).optional(),
+});
+export type OpportunityInvite = z.infer<typeof opportunityInviteSchema>;
+
+export const messageCreateSchema = z.object({
+  threadId: z.string().uuid(),
+  senderUserId: z.string().uuid().optional(),
+  senderOrganizationId: z.string().uuid(),
+  body: z.string().min(1).max(4000),
+});
+export type MessageCreate = z.infer<typeof messageCreateSchema>;
+
+export const reviewCreateSchema = z.object({
+  bookingId: z.string().uuid(),
+  reviewerOrganizationId: z.string().uuid(),
+  reviewedOrganizationId: z.string().uuid(),
+  rating: z.number().min(1).max(5),
+  trafficAccuracyRating: z.number().min(1).max(5).optional(),
+  communicationRating: z.number().min(1).max(5).optional(),
+  setupRating: z.number().min(1).max(5).optional(),
+  professionalismRating: z.number().min(1).max(5).optional(),
+  writtenFeedback: z.string().max(4000).optional(),
+  wouldBookAgain: z.boolean().optional(),
+});
+export type ReviewCreate = z.infer<typeof reviewCreateSchema>;

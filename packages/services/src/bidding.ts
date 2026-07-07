@@ -177,3 +177,58 @@ export async function counterBid(
 // Host accepted the bid and now requests payment, moving it into payment_pending.
 export const requestBidPayment = (db: BidspaceClient, id: string) =>
   transitionBid(db, id, "payment_pending");
+
+// --- Contextual bid lists for cockpit surfaces --------------------------------
+
+export interface BidWithContext extends BidRow {
+  opportunity: { id: string; title: string; slug: string | null; status: string } | null;
+  inventory_unit: { id: string; name: string } | null;
+  bidder_organization: { id: string; name: string; logo_url: string | null; verification_status: string } | null;
+}
+
+const BID_CONTEXT_SELECT = `*,
+  opportunity:opportunities(id, title, slug, status),
+  inventory_unit:inventory_units(id, name),
+  bidder_organization:organizations!bids_bidder_organization_id_fkey(id, name, logo_url, verification_status)`;
+
+// All bids a vendor org has placed, newest first — the vendor /bids surface.
+export async function listBidsForBidderOrg(
+  db: BidspaceClient,
+  bidderOrganizationId: string,
+): Promise<BidWithContext[]> {
+  const { data, error } = await db
+    .from("bids")
+    .select(BID_CONTEXT_SELECT)
+    .eq("bidder_organization_id", bidderOrganizationId)
+    .order("created_at", { ascending: false });
+  if (error) throw fromDbError("listBidsForBidderOrg", error);
+  return (data ?? []) as unknown as BidWithContext[];
+}
+
+// All incoming bids across a host org's opportunities — the host review pipeline.
+export async function listBidsForHostOrg(
+  db: BidspaceClient,
+  hostOrganizationId: string,
+  options: { statuses?: readonly BidStatus[] } = {},
+): Promise<BidWithContext[]> {
+  let query = db
+    .from("bids")
+    .select(BID_CONTEXT_SELECT)
+    .eq("host_organization_id", hostOrganizationId)
+    .order("created_at", { ascending: false });
+  if (options.statuses?.length) {
+    query = query.in("status", [...options.statuses]);
+  }
+  const { data, error } = await query;
+  if (error) throw fromDbError("listBidsForHostOrg", error);
+  return (data ?? []) as unknown as BidWithContext[];
+}
+
+// Statuses that still demand a host decision, in review order.
+export const HOST_DECISION_STATUSES: readonly BidStatus[] = [
+  "submitted",
+  "viewed",
+  "shortlisted",
+  "countered",
+  "waitlisted",
+];
