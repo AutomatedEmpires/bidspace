@@ -10,16 +10,16 @@ const UNITS: {
   delay: number;
   state: "open" | "bidding" | "booked";
 }[] = [
-  { x: 70, y: 78, w: 52, h: 40, delay: 0.4, state: "booked" },
-  { x: 130, y: 78, w: 52, h: 40, delay: 0.9, state: "bidding" },
-  { x: 190, y: 78, w: 52, h: 40, delay: 1.4, state: "open" },
-  { x: 250, y: 78, w: 52, h: 40, delay: 1.9, state: "open" },
-  { x: 70, y: 196, w: 52, h: 40, delay: 1.1, state: "bidding" },
-  { x: 130, y: 196, w: 52, h: 40, delay: 1.6, state: "open" },
-  { x: 190, y: 196, w: 52, h: 40, delay: 2.1, state: "booked" },
-  { x: 250, y: 196, w: 52, h: 40, delay: 2.4, state: "open" },
-  { x: 336, y: 96, w: 44, h: 62, delay: 2.0, state: "bidding" },
-  { x: 336, y: 172, w: 44, h: 62, delay: 2.6, state: "open" },
+  { x: 70, y: 78, w: 52, h: 40, delay: 0.2, state: "booked" },
+  { x: 130, y: 78, w: 52, h: 40, delay: 0.45, state: "bidding" },
+  { x: 190, y: 78, w: 52, h: 40, delay: 0.7, state: "open" },
+  { x: 250, y: 78, w: 52, h: 40, delay: 0.95, state: "open" },
+  { x: 70, y: 196, w: 52, h: 40, delay: 0.55, state: "bidding" },
+  { x: 130, y: 196, w: 52, h: 40, delay: 0.8, state: "open" },
+  { x: 190, y: 196, w: 52, h: 40, delay: 1.05, state: "booked" },
+  { x: 250, y: 196, w: 52, h: 40, delay: 1.2, state: "open" },
+  { x: 336, y: 96, w: 44, h: 62, delay: 1.0, state: "bidding" },
+  { x: 336, y: 172, w: 44, h: 62, delay: 1.3, state: "open" },
 ];
 
 const STATE_STYLE: Record<string, { fill: string; stroke: string; label: string }> = {
@@ -121,7 +121,7 @@ export function HeroPlan() {
         })}
 
         {/* Callout: the claimed position */}
-        <g className="bs-unit" style={{ animationDelay: "3s" }}>
+        <g className="bs-unit" style={{ animationDelay: "1.7s" }}>
           <line x1="156" y1="98" x2="216" y2="52" stroke="#c63d12" strokeWidth="1.2" />
           <rect x="216" y="34" width="128" height="34" rx="3" fill="#16181d" />
           <text x="226" y="48" fontSize="9.5" fontWeight="600" fill="#f6f4ee" fontFamily="var(--font-instrument), sans-serif">
