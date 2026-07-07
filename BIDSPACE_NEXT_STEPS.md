@@ -46,18 +46,31 @@ organization moderation, reports & disputes, payment exceptions.
 application fee → signature-verified idempotent webhook → `settleBookingPayment` through the
 state machines. Every payment surface is env-gated; no fake payment state anywhere.
 
+### Provisioned 2026-07-07
+
+- **Supabase**: project `bidspace` (`hnjjcgxflxlfsqslgxcv`, us-west-1, $10/mo on the upgraded
+  org). Migrations **0001–0011** applied (0011 = advisor hardening: pinned function
+  search_path, PostGIS artifacts revoked from API roles). Demo seed loaded. Deny-all RLS
+  advisor INFOs are the documented D025 posture.
+- **Doppler**: project `bidspace` created; `dev` config holds `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`,
+  `CLERK_ENCRYPTION_KEY`. `apps/web/.env.local` mirrors it for local runs (with placeholder
+  Clerk keys).
+- **Live verification**: public pages + viewport API render real data;
+  `tools/live-loop-check.ts` (full bid→counter→award→booking→payment→settlement, exact D018
+  split) and `tools/live-duplicate-check.ts` (copy-forward) both **PASS** against the live DB.
+
 ### Blockers only the founder can clear
 
-1. **Provision the stack.** BidSpace has **no Doppler project and no Supabase project** (only
-   sweepza / explore&earn exist). Needed: Supabase project (free on the current org — the MCP
-   `create_project` call was permission-blocked in this session), run migrations 0001–0010 +
-   optional seed; Doppler project `bidspace` with `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
-   Clerk keys (create the BidSpace Clerk app), `NEXT_PUBLIC_MAPBOX_TOKEN`, `STRIPE_SECRET_KEY`
-   + `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`, `ADMIN_USER_IDS`, PostHog key; Vercel
-   project wiring.
-2. **Stripe Connect**: enable Connect (Express) on the Stripe account and point the webhook at
-   `/api/stripe/webhook` (`checkout.session.completed`, `checkout.session.expired`,
-   `payment_intent.payment_failed`).
+1. **Clerk**: create the BidSpace Clerk application (dashboard) and put
+   `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` into Doppler `bidspace/dev` (+ prd). Until
+   then, signed-in flows can't be exercised in a browser (a placeholder key makes Clerk's dev
+   handshake redirect document requests).
+2. **Stripe Connect**: enable Connect (Express), set `STRIPE_SECRET_KEY` +
+   `STRIPE_WEBHOOK_SECRET`, point the webhook at `/api/stripe/webhook`
+   (`checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`).
+3. **Mapbox / PostHog / Vercel**: `NEXT_PUBLIC_MAPBOX_TOKEN`, `NEXT_PUBLIC_POSTHOG_KEY`, and
+   the Vercel project (build already verified; `CLERK_ENCRYPTION_KEY` is required in prod).
 
 ### Next engineering steps (in order)
 
