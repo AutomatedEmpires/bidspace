@@ -14,17 +14,26 @@
     "@bidspace/core": "workspace:*",
     "@bidspace/db": "workspace:*",
     "@bidspace/services": "workspace:*",
+    "@bidspace/ui": "workspace:*",
     "@clerk/nextjs": "^7.4.3",
+    "@phosphor-icons/react": "^2.1.10",
+    "clsx": "^2.1.1",
+    "mapbox-gl": "^3.10.0",
     "next": "16.2.7",
+    "posthog-js": "^1.215.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.1.0",
     "tsx": "^4.20.6",
     "typescript": "^5"
   }
