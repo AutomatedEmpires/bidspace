@@ -4,6 +4,10 @@ import { tryGetDb } from "@/lib/safe-db";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bidspace.app";
 
+// Regenerate hourly at runtime — the build environment has no database, so a
+// purely static sitemap would freeze without live opportunity URLs.
+export const revalidate = 3600;
+
 const STATIC_ROUTES = [
   "",
   "/explore",

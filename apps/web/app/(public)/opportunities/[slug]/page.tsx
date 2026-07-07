@@ -63,7 +63,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const opportunity = await loadOpportunity(slug);
-  if (!opportunity) return { title: "Opportunity" };
+  // Non-public listings never leak their existence through metadata — the
+  // page body enforces visibility per-viewer; the <head> stays generic.
+  if (!opportunity || opportunity.visibility !== "public") {
+    return { title: "Opportunity", robots: { index: false } };
+  }
   const place = opportunity.venue ? ` in ${opportunity.venue.city}, ${opportunity.venue.state}` : "";
   return {
     title: opportunity.title,
