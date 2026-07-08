@@ -60,17 +60,27 @@ state machines. Every payment surface is env-gated; no fake payment state anywhe
   `tools/live-loop-check.ts` (full bid→counter→award→booking→payment→settlement, exact D018
   split) and `tools/live-duplicate-check.ts` (copy-forward) both **PASS** against the live DB.
 
-### Blockers only the founder can clear
+### Production activation (2026-07-07) — see `docs/PRODUCTION-ACTIVATION.md`
 
-1. **Clerk**: create the BidSpace Clerk application (dashboard) and put
-   `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` into Doppler `bidspace/dev` (+ prd). Until
-   then, signed-in flows can't be exercised in a browser (a placeholder key makes Clerk's dev
-   handshake redirect document requests).
-2. **Stripe Connect**: enable Connect (Express), set `STRIPE_SECRET_KEY` +
-   `STRIPE_WEBHOOK_SECRET`, point the webhook at `/api/stripe/webhook`
-   (`checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`).
-3. **Mapbox / PostHog / Vercel**: `NEXT_PUBLIC_MAPBOX_TOKEN`, `NEXT_PUBLIC_POSTHOG_KEY`, and
-   the Vercel project (build already verified; `CLERK_ENCRYPTION_KEY` is required in prod).
+Phase 1 reverified (typecheck/62 tests/build green; live loop + copy-forward re-PASS).
+Phase 3 done: Stripe Connect reviewed vs current docs and modernized to **controller-property
+accounts** (off the deprecated `type:"express"`), destination-charge/webhook/fee code unchanged
+— recorded as **D028**, runbook in `docs/CONNECT-RUNBOOK.md`.
+
+**Capabilities were probed, not assumed:** Vercel MCP is usable (team AutomatedEmpires); the
+Stripe, Mapbox, and PostHog integrations reachable here are **not bound to working accounts**
+(Stripe balance call failed; Mapbox token invalid); Clerk and Sentry have **no non-interactive
+path**. So every remaining step is a founder account action, not code:
+
+1. **Clerk** (HARD BLOCKER — unblocks auth, deploy, all E2E): create the app, enable
+   Organizations, set paths, keys → Doppler `bidspace/prd`. No API/MCP exists; dashboard only.
+2. **Stripe Connect** (HARD BLOCKER — KYC): follow `docs/CONNECT-RUNBOOK.md`. Code is done.
+3. **Mapbox**: mint a public token restricted to the prod host → `NEXT_PUBLIC_MAPBOX_TOKEN`.
+4. **PostHog**: create a BidSpace project → `NEXT_PUBLIC_POSTHOG_KEY` (server + client events
+   already instrumented).
+5. **Sentry**: `add @sentry/nextjs` + wizard + DSN (intentionally not half-wired here).
+6. **Vercel deploy**: ready and build-green, but **deploy only after Clerk** (ClerkProvider +
+   middleware 500 on every route without real keys). Merge to `main` via PR first (AGENTS.md).
 
 ### Next engineering steps (in order)
 
