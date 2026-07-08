@@ -20,7 +20,12 @@ export function getStripe(): Stripe {
     );
   }
   if (!cached) {
-    cached = new Stripe(key);
+    // apiVersion is left to the SDK's pinned default (stripe@18.5.0) so the
+    // generated types match the wire version. appInfo lets Stripe attribute
+    // platform API traffic — a Connect best practice.
+    cached = new Stripe(key, {
+      appInfo: { name: "BidSpace", url: "https://bidspace.app" },
+    });
   }
   return cached;
 }
@@ -79,7 +84,22 @@ export async function createBookingCheckoutSession(input: {
   });
 }
 
-// Express onboarding for host payout accounts.
+// Stripe-hosted onboarding for host payout accounts.
+//
+// D028: connected accounts are created with controller properties, NOT the
+// deprecated `type: "express"` account type. The controller config below is
+// the Express-equivalent posture required by our destination-charge model:
+//   - stripe_dashboard.type "express" → host gets the Express Dashboard
+//   - fees.payer "application"        → the platform pays Stripe fees (required
+//                                        for destination charges)
+//   - losses.payments "application"   → the platform is liable for negative
+//                                        balances (required for destination
+//                                        charges; recommended by Stripe)
+//   - requirement_collection defaults to "stripe" → Stripe-hosted KYC, so we
+//                                        need not collect country up front.
+// The `transfers` capability is what lets the platform route destination-charge
+// funds into the connected account. `controller` and `type` are mutually
+// exclusive — passing both is an API error, so `type` is intentionally absent.
 export async function createConnectOnboardingLink(input: {
   existingAccountId: string | null;
   organizationName: string;
@@ -91,7 +111,12 @@ export async function createConnectOnboardingLink(input: {
   let accountId = input.existingAccountId;
   if (!accountId) {
     const account = await stripe.accounts.create({
-      type: "express",
+      controller: {
+        stripe_dashboard: { type: "express" },
+        fees: { payer: "application" },
+        losses: { payments: "application" },
+      },
+      capabilities: { transfers: { requested: true } },
       business_profile: { name: input.organizationName },
       email: input.email,
     });
