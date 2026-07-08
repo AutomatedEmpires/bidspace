@@ -136,6 +136,36 @@ export async function getPayment(db: BidspaceClient, id: string): Promise<Paymen
   return data as PaymentRow;
 }
 
+// Look up the payment behind a Stripe PaymentIntent (set during settlement).
+// Used by refund/dispute webhook handlers to map a Stripe event back to the
+// marketplace record. Returns null when no payment matches (e.g. an intent from
+// a different platform product).
+export async function findPaymentByStripeIntent(
+  db: BidspaceClient,
+  stripePaymentIntentId: string,
+): Promise<PaymentRow | null> {
+  const { data, error } = await db
+    .from("payments")
+    .select("*")
+    .eq("stripe_payment_intent_id", stripePaymentIntentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw fromDbError("findPaymentByStripeIntent", error);
+  return (data as PaymentRow | null) ?? null;
+}
+
+// Pure: decide the refund payment status from the charge total vs the amount
+// refunded so far. Full refund → `refunded`; a non-zero partial →
+// `partially_refunded`. Kept DB-free so it is unit-testable.
+export function classifyRefund(
+  amountCents: number,
+  amountRefundedCents: number,
+): "refunded" | "partially_refunded" | null {
+  if (!Number.isFinite(amountRefundedCents) || amountRefundedCents <= 0) return null;
+  return amountRefundedCents >= amountCents ? "refunded" : "partially_refunded";
+}
+
 // Records a payment status change (e.g. from a Stripe webhook), guarded by the
 // canonical payment state machine.
 export async function recordPaymentResult(

@@ -46,9 +46,12 @@ stripe.accounts.create({
    `bidspace/dev`).
 4. **Webhook endpoint**: dashboard → Developers → Webhooks → Add endpoint →
    `https://<production-host>/api/stripe/webhook`. Subscribe to exactly:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-   - `payment_intent.payment_failed`
+   - `checkout.session.completed` — settles the booking
+   - `checkout.session.expired` — marks the payment failed
+   - `payment_intent.payment_failed` — marks the payment failed
+   - `charge.refunded` — records refund (full → cancels booking; partial →
+     `partially_refunded`)
+   - `charge.dispute.created` — flags payment + booking `disputed` for admin
    Copy the **Signing secret** → Doppler as `STRIPE_WEBHOOK_SECRET`.
 5. Redeploy so the app picks up the keys.
 

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitPayment, buildConnectChargeParams } from "./payments";
+import { splitPayment, buildConnectChargeParams, classifyRefund } from "./payments";
+import { paymentStatusTransitions, canTransition } from "@bidspace/core";
 import { ValidationError } from "./errors";
 
 test("splitPayment applies the locked 10% platform fee (D018)", () => {
@@ -39,4 +40,23 @@ test("buildConnectChargeParams requires a connected account", () => {
     () => buildConnectChargeParams({ amountCents: 1000, hostStripeAccountId: "" }),
     ValidationError,
   );
+});
+
+test("classifyRefund distinguishes full, partial, and no refund", () => {
+  assert.equal(classifyRefund(28_000, 28_000), "refunded");
+  assert.equal(classifyRefund(28_000, 30_000), "refunded"); // over-refund clamps to full
+  assert.equal(classifyRefund(28_000, 10_000), "partially_refunded");
+  assert.equal(classifyRefund(28_000, 0), null);
+  assert.equal(classifyRefund(28_000, -5), null);
+});
+
+test("refund/dispute states are reachable from a paid payment (state machine)", () => {
+  // The webhook only ever refunds/disputes a settled payment; assert those
+  // transitions are legal so the handlers can't silently no-op on a valid event.
+  assert.ok(canTransition(paymentStatusTransitions, "paid", "refunded"));
+  assert.ok(canTransition(paymentStatusTransitions, "paid", "partially_refunded"));
+  assert.ok(canTransition(paymentStatusTransitions, "paid", "disputed"));
+  assert.ok(canTransition(paymentStatusTransitions, "partially_refunded", "refunded"));
+  // And a fully-refunded payment is terminal — a replay can't move it again.
+  assert.ok(!canTransition(paymentStatusTransitions, "refunded", "refunded"));
 });

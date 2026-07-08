@@ -3,8 +3,11 @@ import type Stripe from "stripe";
 import {
   ServiceError,
   TransitionError,
+  classifyRefund,
+  findPaymentByStripeIntent,
   recordPaymentResult,
   settleBookingPayment,
+  transitionBooking,
   transitionInventoryUnit,
   getBooking,
 } from "@bidspace/services";
@@ -159,6 +162,68 @@ async function handleStripeEvent(
         await recordPaymentResult(db, payment.id, "failed", {
           failure_reason: event.type,
         });
+      }
+      return;
+    }
+    case "charge.refunded": {
+      // A settled charge was refunded (full or partial). Map back to the
+      // payment via its PaymentIntent, record the refund, and cancel the
+      // booking on a full refund where the lifecycle still allows it.
+      const charge = event.data.object as {
+        payment_intent?: string | { id: string } | null;
+        amount?: number;
+        amount_refunded?: number;
+      };
+      const intentId =
+        typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : (charge.payment_intent?.id ?? null);
+      if (!intentId) return;
+      const payment = await findPaymentByStripeIntent(db, intentId);
+      if (!payment) return;
+      const to = classifyRefund(charge.amount ?? payment.amount_cents, charge.amount_refunded ?? 0);
+      if (!to) return;
+      try {
+        await recordPaymentResult(db, payment.id, to, {
+          refund_cents: charge.amount_refunded ?? null,
+        });
+      } catch (error) {
+        if (!(error instanceof TransitionError)) throw error; // already at/after this state
+      }
+      if (to === "refunded") {
+        // Best-effort: a fully-refunded booking is cancelled when its stage
+        // still permits it (pre-operation). in_progress/completed bookings keep
+        // their state — the refund is recorded but the engagement happened.
+        try {
+          const booking = await getBooking(db, payment.booking_id);
+          await transitionBooking(db, booking.id, "cancelled");
+        } catch (error) {
+          if (!(error instanceof ServiceError)) throw error;
+        }
+      }
+      return;
+    }
+    case "charge.dispute.created": {
+      // A chargeback was opened. Flag the payment + booking as disputed so the
+      // admin dispute queue surfaces it; resolution is a human/admin action.
+      const dispute = event.data.object as { payment_intent?: string | { id: string } | null };
+      const intentId =
+        typeof dispute.payment_intent === "string"
+          ? dispute.payment_intent
+          : (dispute.payment_intent?.id ?? null);
+      if (!intentId) return;
+      const payment = await findPaymentByStripeIntent(db, intentId);
+      if (!payment) return;
+      try {
+        await recordPaymentResult(db, payment.id, "disputed");
+      } catch (error) {
+        if (!(error instanceof TransitionError)) throw error;
+      }
+      try {
+        const booking = await getBooking(db, payment.booking_id);
+        await transitionBooking(db, booking.id, "disputed");
+      } catch (error) {
+        if (!(error instanceof ServiceError)) throw error;
       }
       return;
     }

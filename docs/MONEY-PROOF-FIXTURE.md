@@ -96,6 +96,8 @@ programmatically and can be used as the automated regression once live.
 ## Live-mode note
 
 In live mode, use a real card for a small real charge, confirm the transfer +
-fee in the Stripe dashboard, then **refund** the PaymentIntent. Refund handling
-beyond this manual step (dispute/refund webhooks → `payments.refunded`) is a
-documented post-launch follow-up.
+fee in the Stripe dashboard, then **refund** the PaymentIntent. The
+`charge.refunded` webhook now records the refund (`payments.refunded`, and a
+full refund cancels the booking where the lifecycle allows); `charge.dispute.created`
+flags the payment + booking `disputed` for the admin queue. Subscribe to both in
+the webhook endpoint (see `docs/CONNECT-RUNBOOK.md`).
