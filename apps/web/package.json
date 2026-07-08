@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --import tsx ./lib/**/*.test.ts"
+    "test": "node --test --import tsx ./lib/**/*.test.ts",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
     "@bidspace/core": "workspace:*",
@@ -26,6 +28,7 @@
     "stripe": "^18.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^20",
     "@types/react": "^19",

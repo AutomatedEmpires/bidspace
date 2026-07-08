@@ -39,97 +39,130 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  // Idempotency: the event id is the primary key; a duplicate delivery is a no-op.
-  const inserted = await db
+  // Idempotency, done safely: a ledger row means the event was FULLY processed.
+  // We record it only AFTER handling succeeds (see below), never before — so a
+  // crash or DB hiccup mid-settlement cannot strand a paid booking. Every
+  // handler is itself idempotent (state-machine guards + status-filtered
+  // queries), so a Stripe retry re-runs harmlessly until it succeeds.
+  const seen = await db
     .from("stripe_webhook_events")
-    .insert({ id: event.id, event_type: event.type });
-  if (inserted.error) {
-    const alreadyProcessed = inserted.error.code === "23505";
-    if (alreadyProcessed) {
-      return NextResponse.json({ received: true, duplicate: true });
-    }
-    return NextResponse.json({ error: "Ledger write failed" }, { status: 500 });
+    .select("id")
+    .eq("id", event.id)
+    .maybeSingle();
+  if (seen.error) {
+    return NextResponse.json({ error: "Ledger read failed" }, { status: 500 });
+  }
+  if (seen.data) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const bookingId = session.metadata?.booking_id;
-        if (!bookingId) break;
-
-        const paymentResult = await db
-          .from("payments")
-          .select("*")
-          .eq("booking_id", bookingId)
-          .in("status", ["pending", "authorized"])
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        const payment = paymentResult.data as PaymentRow | null;
-        if (payment) {
-          await recordPaymentResult(db, payment.id, "paid", {
-            stripe_payment_intent_id:
-              typeof session.payment_intent === "string"
-                ? session.payment_intent
-                : payment.stripe_payment_intent_id,
-          });
-        }
-
-        const booking = await getBooking(db, bookingId);
-        if (booking.status === "pending_payment") {
-          await settleBookingPayment(db, bookingId);
-          captureServerEvent("booking_paid", booking.bidder_organization_id, {
-            booking_id: booking.id,
-            price_cents: booking.price_cents,
-          });
-          // Advance the unit to booked along whichever legal path it is on.
-          try {
-            await transitionInventoryUnit(db, booking.inventory_unit_id, "booked");
-          } catch (error) {
-            if (error instanceof TransitionError) {
-              try {
-                await transitionInventoryUnit(db, booking.inventory_unit_id, "payment_pending");
-                await transitionInventoryUnit(db, booking.inventory_unit_id, "booked");
-              } catch {
-                // Unit state is advisory; the booking + payment are authoritative.
-              }
-            } else {
-              throw error;
-            }
-          }
-        }
-        break;
-      }
-      case "checkout.session.expired":
-      case "payment_intent.payment_failed": {
-        const object = event.data.object as { metadata?: Record<string, string> };
-        const bookingId = object.metadata?.booking_id;
-        if (!bookingId) break;
-        const paymentResult = await db
-          .from("payments")
-          .select("*")
-          .eq("booking_id", bookingId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        const payment = paymentResult.data as PaymentRow | null;
-        if (payment) {
-          await recordPaymentResult(db, payment.id, "failed", {
-            failure_reason: event.type,
-          });
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    await handleStripeEvent(db, event);
   } catch (error) {
-    if (!(error instanceof ServiceError)) throw error;
-    // Guarded transitions can legally reject replays/out-of-order events;
-    // acknowledge so Stripe stops retrying a delivery we cannot apply.
+    // A genuine failure (DB down, unexpected error). Do NOT record the event as
+    // processed and return non-2xx so Stripe retries with backoff. ServiceError
+    // from a guarded transition on a truly stuck state is rare; retrying is the
+    // safe default — the alternative (silently 200) loses the settlement.
+    const detail = error instanceof ServiceError ? error.message : "handler error";
+    return NextResponse.json({ error: detail }, { status: 500 });
+  }
+
+  // Success: record the event so future retries short-circuit. A concurrent
+  // duplicate delivery may have inserted it first (23505) — that is fine.
+  const recorded = await db
+    .from("stripe_webhook_events")
+    .insert({ id: event.id, event_type: event.type });
+  if (recorded.error && recorded.error.code !== "23505") {
+    // Handling already applied; failing to record only risks a harmless,
+    // idempotent reprocess on the next retry. Acknowledge success.
+    return NextResponse.json({ received: true, ledger: "deferred" });
   }
 
   return NextResponse.json({ received: true });
+}
+
+// Applies one Stripe event to marketplace state. Idempotent: status-filtered
+// queries + state-machine guards make re-execution a no-op once applied, so it
+// is safe to call again on a Stripe retry.
+async function handleStripeEvent(
+  db: NonNullable<ReturnType<typeof tryGetDb>>,
+  event: Stripe.Event,
+): Promise<void> {
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const bookingId = session.metadata?.booking_id;
+      if (!bookingId) return;
+
+      const paymentResult = await db
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .in("status", ["pending", "authorized"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (paymentResult.error) throw paymentResult.error;
+      const payment = paymentResult.data as PaymentRow | null;
+      if (payment) {
+        await recordPaymentResult(db, payment.id, "paid", {
+          stripe_payment_intent_id:
+            typeof session.payment_intent === "string"
+              ? session.payment_intent
+              : payment.stripe_payment_intent_id,
+        });
+      }
+
+      const booking = await getBooking(db, bookingId);
+      if (booking.status === "pending_payment") {
+        await settleBookingPayment(db, bookingId);
+        captureServerEvent("booking_paid", booking.bidder_organization_id, {
+          booking_id: booking.id,
+          price_cents: booking.price_cents,
+        });
+        // Advance the unit to booked along whichever legal path it is on. Unit
+        // state is advisory; the booking + payment are the authoritative record,
+        // so an illegal unit transition never fails the settlement.
+        try {
+          await transitionInventoryUnit(db, booking.inventory_unit_id, "booked");
+        } catch (error) {
+          if (error instanceof TransitionError) {
+            try {
+              await transitionInventoryUnit(db, booking.inventory_unit_id, "payment_pending");
+              await transitionInventoryUnit(db, booking.inventory_unit_id, "booked");
+            } catch {
+              // Best-effort only.
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
+      return;
+    }
+    case "checkout.session.expired":
+    case "payment_intent.payment_failed": {
+      const object = event.data.object as { metadata?: Record<string, string> };
+      const bookingId = object.metadata?.booking_id;
+      if (!bookingId) return;
+      const paymentResult = await db
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (paymentResult.error) throw paymentResult.error;
+      const payment = paymentResult.data as PaymentRow | null;
+      if (payment) {
+        await recordPaymentResult(db, payment.id, "failed", {
+          failure_reason: event.type,
+        });
+      }
+      return;
+    }
+    default:
+      return;
+  }
 }
