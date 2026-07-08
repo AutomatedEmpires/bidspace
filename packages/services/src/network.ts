@@ -43,6 +43,30 @@ export function canSeeOpportunity(
   }
 }
 
+// DB-backed convenience over the pure rule: resolves the viewer's network +
+// invitation state and returns whether they may see this opportunity. Use this
+// anywhere a non-public opportunity (or its units) could be reached by id —
+// detail pages AND mutation server actions must both enforce it, since a server
+// action is directly invokable regardless of what the page rendered.
+export async function canOrgViewOpportunity(
+  db: BidspaceClient,
+  opportunity: Pick<OpportunityRow, "id" | "visibility" | "organization_id">,
+  viewerOrganizationId: string | null,
+): Promise<boolean> {
+  if (opportunity.visibility === "public") return true;
+  if (!viewerOrganizationId) return false;
+  if (viewerOrganizationId === opportunity.organization_id) return true;
+  const [member, invited] = await Promise.all([
+    isActiveNetworkMember(db, opportunity.organization_id, viewerOrganizationId),
+    isInvitedToOpportunity(db, opportunity.id, viewerOrganizationId),
+  ]);
+  return canSeeOpportunity(opportunity, {
+    viewerOrganizationId,
+    isActiveNetworkMember: member,
+    isInvited: invited,
+  });
+}
+
 // --- Vendor network ----------------------------------------------------------
 
 export async function inviteVendorToNetwork(

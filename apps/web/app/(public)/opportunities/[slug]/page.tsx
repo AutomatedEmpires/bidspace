@@ -6,10 +6,8 @@ import { revalidatePath } from "next/cache";
 import {
   NotFoundError,
   assessFit,
-  canSeeOpportunity,
+  canOrgViewOpportunity,
   getOpportunityByRef,
-  isActiveNetworkMember,
-  isInvitedToOpportunity,
   listDocumentsForOrganization,
   listSavedOpportunityIds,
   listUnitsWithOpportunity,
@@ -134,25 +132,12 @@ export default async function OpportunityDetailPage({
   const opportunity = await loadOpportunity(slug);
   if (!opportunity || !db) notFound();
 
-  // Visibility: one canonical rule for public, network, invite-only supply.
+  // Visibility: one canonical rule for public, network, invite-only supply —
+  // shared with the unit page and bid action via canOrgViewOpportunity.
   const viewer = await getCurrentUserOrgContext();
   const viewerOrgId = viewer?.activeDbOrganizationId ?? null;
-  if (opportunity.visibility !== "public") {
-    const [member, invited] = viewerOrgId
-      ? await Promise.all([
-          isActiveNetworkMember(db, opportunity.organization_id, viewerOrgId),
-          isInvitedToOpportunity(db, opportunity.id, viewerOrgId),
-        ])
-      : [false, false];
-    if (
-      !canSeeOpportunity(opportunity, {
-        viewerOrganizationId: viewerOrgId,
-        isActiveNetworkMember: member,
-        isInvited: invited,
-      })
-    ) {
-      notFound();
-    }
+  if (!(await canOrgViewOpportunity(db, opportunity, viewerOrgId))) {
+    notFound();
   }
 
   const units = await listUnitsWithOpportunity(db, opportunity.id);

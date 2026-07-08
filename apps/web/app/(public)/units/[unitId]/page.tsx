@@ -4,6 +4,7 @@ import { COMMERCE_LAYER, formatMoney } from "@bidspace/core";
 import {
   NotFoundError,
   ValidationError,
+  canOrgViewOpportunity,
   getInventoryUnit,
   getOpportunity,
   listBidsForOpportunity,
@@ -108,6 +109,12 @@ export default async function UnitDetailPage({
   const unit = await getUnitOrNotFound(unitId);
 
   const opportunity = await getOpportunity(db, unit.opportunity_id);
+  // Visibility: a unit belonging to a network/invite-only opportunity is not
+  // viewable (or biddable) by an org that cannot see the opportunity, even with
+  // the unit id in hand. Public units are open to all.
+  if (!(await canOrgViewOpportunity(db, opportunity, context.activeDbOrganizationId))) {
+    notFound();
+  }
   const { venue, event } = await getUnitContext(unit.venue_id, unit.event_id, opportunity);
   const minimumBidCents = unit.minimum_bid_cents ?? opportunity.minimum_bid_cents;
   const bidAvailabilityError =
@@ -135,6 +142,18 @@ export default async function UnitDetailPage({
 
       const serverDb = createServerBidspaceClient();
       const currentUnit = await getInventoryUnit(serverDb, unitId);
+      // Re-enforce visibility on the action itself — server actions are POST
+      // endpoints, invokable without ever loading the (guarded) page.
+      const currentOpportunity = await getOpportunity(serverDb, currentUnit.opportunity_id);
+      if (
+        !(await canOrgViewOpportunity(
+          serverDb,
+          currentOpportunity,
+          currentContext.activeDbOrganizationId,
+        ))
+      ) {
+        return { status: "error", message: "This opportunity is not open to your organization." };
+      }
       const bidInput = buildBidCreateInput({
         bidderOrganizationId: currentContext.activeDbOrganizationId,
         opportunityId: currentUnit.opportunity_id,
