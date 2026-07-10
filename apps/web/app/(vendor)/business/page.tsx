@@ -8,6 +8,7 @@ import {
   buildTrustSignals,
   listDocumentsForOrganization,
   listReviewsForOrganization,
+  vendorProfileCompleteness,
 } from "@bidspace/services";
 import { DOCUMENT_TYPE, roleProfileUpdateSchema, type DocumentType } from "@bidspace/core";
 import type { OrganizationRow, RoleProfileRow } from "@bidspace/db";
@@ -29,6 +30,7 @@ import {
 import { requireVendorContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDate } from "@/lib/format";
+import { ProfileCompleteness } from "@/components/profile-completeness";
 
 export const metadata: Metadata = { title: "Business profile" };
 export const dynamic = "force-dynamic";
@@ -66,6 +68,7 @@ export default async function BusinessProfilePage() {
     currentDocuments: documents,
   });
   const ratings = aggregateReviews(reviews);
+  const completeness = vendorProfileCompleteness({ organization, profile, documents });
 
   async function updateProfileAction(formData: FormData) {
     "use server";
@@ -291,6 +294,7 @@ export default async function BusinessProfilePage() {
         </div>
 
         <aside className="grid content-start gap-4">
+          <ProfileCompleteness completeness={completeness} />
           <Panel>
             <PanelHeader title="Trust provenance" kicker="Why hosts can rely on you" />
             <PanelBody>

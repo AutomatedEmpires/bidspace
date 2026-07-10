@@ -15,5 +15,6 @@ export * from "./messaging";
 export * from "./reviews";
 export * from "./trust";
 export * from "./fit";
+export * from "./profile";
 export * from "./admin";
 export * from "./listings";
