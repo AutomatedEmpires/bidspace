@@ -25,7 +25,7 @@ export default function MessagesLayout({ children }: { children: ReactNode }) {
           <UserButton />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+      <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">{children}</main>
     </div>
   );
 }

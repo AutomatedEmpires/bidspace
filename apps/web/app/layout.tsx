@@ -44,6 +44,12 @@ export default function RootLayout({
     <ClerkProvider publishableKey={clerkPublishableKey}>
       <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`}>
         <body className="bg-canvas text-ink dark:bg-ink-deep dark:text-canvas">
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-[3px] focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-canvas focus:outline-2 focus:outline-offset-2 focus:outline-signal dark:focus:bg-canvas dark:focus:text-ink"
+          >
+            Skip to content
+          </a>
           <Suspense fallback={null}>
             <AnalyticsProvider>{children}</AnalyticsProvider>
           </Suspense>

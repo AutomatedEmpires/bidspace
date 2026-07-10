@@ -87,7 +87,7 @@ export function CockpitShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:pb-8">
+        <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:pb-8">
           {children}
         </main>
 

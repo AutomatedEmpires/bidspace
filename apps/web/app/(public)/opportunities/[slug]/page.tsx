@@ -67,12 +67,20 @@ export async function generateMetadata({
     return { title: "Opportunity", robots: { index: false } };
   }
   const place = opportunity.venue ? ` in ${opportunity.venue.city}, ${opportunity.venue.state}` : "";
+  // Canonicalize to the stable slug URL so the /opportunities/<uuid> alias
+  // doesn't split ranking signal or read as duplicate content.
+  const canonicalPath = `/opportunities/${opportunity.slug ?? opportunity.id}`;
   return {
     title: opportunity.title,
     description:
       opportunity.description?.slice(0, 160) ??
       `Temporary commercial opportunity${place} on BidSpace.`,
-    openGraph: { title: opportunity.title, images: opportunity.image_urls?.[0] ? [opportunity.image_urls[0]] : undefined },
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      title: opportunity.title,
+      url: canonicalPath,
+      images: opportunity.image_urls?.[0] ? [opportunity.image_urls[0]] : undefined,
+    },
   };
 }
 

@@ -5,6 +5,7 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 import { cn } from "./cn";
+import { Icon } from "./icon";
 
 const CONTROL =
   "w-full rounded-[3px] border border-strong bg-surface px-3 text-sm text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal dark:bg-surface-dark dark:text-canvas dark:placeholder:text-canvas-faint dark:focus:border-canvas";
@@ -49,9 +50,16 @@ export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputEleme
 
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cn(CONTROL, "h-10 appearance-none pr-8", className)} {...rest}>
-      {children}
-    </select>
+    <div className="relative">
+      <select className={cn(CONTROL, "h-10 appearance-none pr-9", className)} {...rest}>
+        {children}
+      </select>
+      <Icon
+        name="caretDown"
+        size={16}
+        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted dark:text-canvas-muted"
+      />
+    </div>
   );
 }
 
