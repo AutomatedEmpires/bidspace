@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
-import { formatMoney } from "@bidspace/core";
+import { formatMoney, hostPayoutCents } from "@bidspace/core";
 import {
   ServiceError,
   getBooking,
@@ -131,7 +131,7 @@ export default async function HostBookingsPage() {
               <TH>Vendor</TH>
               <TH>Position</TH>
               <TH>Dates</TH>
-              <TH className="text-right">Price</TH>
+              <TH className="text-right">Price / your payout</TH>
               <TH>Status</TH>
               <TH />
             </tr>
@@ -144,7 +144,12 @@ export default async function HostBookingsPage() {
                   <TD className="font-medium">{booking.bidder_organization?.name ?? "Vendor"}</TD>
                   <TD>{booking.inventory_unit?.name ?? "—"}</TD>
                   <TD>{formatDateRange(booking.starts_at, booking.ends_at)}</TD>
-                  <TD className="text-right font-semibold tabular-nums">{formatMoney(booking.price_cents)}</TD>
+                  <TD className="text-right tabular-nums">
+                    <span className="font-semibold">{formatMoney(booking.price_cents)}</span>
+                    <span className="block text-xs font-medium text-moss dark:text-moss-bright">
+                      nets {formatMoney(hostPayoutCents(booking.price_cents))}
+                    </span>
+                  </TD>
                   <TD>
                     <StatusBadge status={booking.status} />
                   </TD>

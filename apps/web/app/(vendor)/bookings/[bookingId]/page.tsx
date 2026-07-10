@@ -297,6 +297,46 @@ export default async function VendorBookingDetailPage({
             </Panel>
           ) : null}
 
+          {!paymentPending && payment ? (
+            <Panel>
+              <PanelHeader
+                title="Payment"
+                kicker="Your record"
+                actions={<StatusBadge status={payment.status} />}
+              />
+              <PanelBody className="grid gap-3">
+                <DescriptionList
+                  columns={1}
+                  items={[
+                    { term: "Amount", detail: formatMoney(payment.amount_cents) },
+                    {
+                      term: "Platform fee (paid by host)",
+                      detail:
+                        payment.platform_fee_cents != null
+                          ? formatMoney(payment.platform_fee_cents)
+                          : null,
+                    },
+                    {
+                      term: "Refunded",
+                      detail: payment.refund_cents ? formatMoney(payment.refund_cents) : null,
+                    },
+                  ]}
+                />
+                {payment.receipt_url ? (
+                  <a
+                    href={payment.receipt_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={buttonClasses("secondary", "sm", "w-full")}
+                  >
+                    <Icon name="external" size={15} />
+                    View Stripe receipt
+                  </a>
+                ) : null}
+              </PanelBody>
+            </Panel>
+          ) : null}
+
           <Panel>
             <PanelBody className="grid gap-2">
               <form action={messageHostAction}>
