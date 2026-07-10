@@ -80,9 +80,10 @@ purely: create account → get keys → set env → register webhook → prove.
 4. Copy keys. **Test mode first**: `STRIPE_SECRET_KEY` (sk_test) →
    Doppler `bidspace/dev`; live (sk_live) → `bidspace/prd` later.
 5. **Webhook**: Developers → Webhooks → Add endpoint →
-   `https://<vercel-host>/api/stripe/webhook`. Subscribe to EXACTLY these 5:
+   `https://<vercel-host>/api/stripe/webhook`. Subscribe to EXACTLY these 6:
    `checkout.session.completed`, `checkout.session.expired`,
-   `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.created`.
+   `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.created`,
+   `charge.dispute.closed`.
    Copy the signing secret → `STRIPE_WEBHOOK_SECRET`.
 6. **Prove the loop** using `docs/MONEY-PROOF-FIXTURE.md` (exact seeded
    host/vendor/unit + expected DB + Stripe objects): host connects payouts at

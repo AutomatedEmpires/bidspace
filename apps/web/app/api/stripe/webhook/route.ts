@@ -4,6 +4,7 @@ import {
   ServiceError,
   TransitionError,
   classifyRefund,
+  classifyDisputeClose,
   findPaymentByStripeIntent,
   recordPaymentResult,
   settleBookingPayment,
@@ -224,6 +225,44 @@ async function handleStripeEvent(
         await transitionBooking(db, booking.id, "disputed");
       } catch (error) {
         if (!(error instanceof ServiceError)) throw error;
+      }
+      return;
+    }
+    case "charge.dispute.closed": {
+      // The chargeback resolved. Record the money fact (won → funds retained,
+      // lost → refunded to the buyer). A lost dispute cancels the booking (the
+      // engagement is void); a won dispute leaves the booking for admin to
+      // resolve operationally via the disputes queue.
+      const dispute = event.data.object as {
+        payment_intent?: string | { id: string } | null;
+        status?: string;
+      };
+      const outcome = classifyDisputeClose(dispute.status ?? "");
+      if (!outcome) return;
+      const intentId =
+        typeof dispute.payment_intent === "string"
+          ? dispute.payment_intent
+          : (dispute.payment_intent?.id ?? null);
+      if (!intentId) return;
+      const payment = await findPaymentByStripeIntent(db, intentId);
+      if (!payment) return;
+      try {
+        await recordPaymentResult(
+          db,
+          payment.id,
+          outcome,
+          outcome === "refunded" ? { refund_cents: payment.amount_cents } : {},
+        );
+      } catch (error) {
+        if (!(error instanceof TransitionError)) throw error;
+      }
+      if (outcome === "refunded") {
+        try {
+          const booking = await getBooking(db, payment.booking_id);
+          await transitionBooking(db, booking.id, "cancelled");
+        } catch (error) {
+          if (!(error instanceof ServiceError)) throw error;
+        }
       }
       return;
     }

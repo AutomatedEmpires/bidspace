@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitPayment, buildConnectChargeParams, classifyRefund } from "./payments";
+import {
+  splitPayment,
+  buildConnectChargeParams,
+  classifyRefund,
+  classifyDisputeClose,
+} from "./payments";
 import { paymentStatusTransitions, canTransition } from "@bidspace/core";
 import { ValidationError } from "./errors";
 
@@ -59,4 +64,19 @@ test("refund/dispute states are reachable from a paid payment (state machine)", 
   assert.ok(canTransition(paymentStatusTransitions, "partially_refunded", "refunded"));
   // And a fully-refunded payment is terminal — a replay can't move it again.
   assert.ok(!canTransition(paymentStatusTransitions, "refunded", "refunded"));
+});
+
+test("classifyDisputeClose maps won/lost and ignores non-terminal statuses", () => {
+  assert.equal(classifyDisputeClose("won"), "paid_out");
+  assert.equal(classifyDisputeClose("lost"), "refunded");
+  assert.equal(classifyDisputeClose("warning_closed"), null);
+  assert.equal(classifyDisputeClose("needs_response"), null);
+  assert.equal(classifyDisputeClose(""), null);
+});
+
+test("dispute-close outcomes are legal transitions from a disputed payment", () => {
+  // won -> paid_out, lost -> refunded must both be reachable from `disputed`,
+  // or the webhook would silently swallow a resolved chargeback.
+  assert.ok(canTransition(paymentStatusTransitions, "disputed", "paid_out"));
+  assert.ok(canTransition(paymentStatusTransitions, "disputed", "refunded"));
 });

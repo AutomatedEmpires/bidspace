@@ -166,6 +166,21 @@ export function classifyRefund(
   return amountRefundedCents >= amountCents ? "refunded" : "partially_refunded";
 }
 
+// Pure: map a closed Stripe dispute's status to the resolved payment status.
+//   won            → `paid_out`  (platform retained the funds; payout proceeds)
+//   lost           → `refunded`  (chargeback succeeded; funds returned to buyer)
+//   warning_closed → null        (an early warning cleared; no money moved)
+//   anything else  → null        (still open / not a terminal outcome)
+// The booking's operational outcome stays a human/admin decision; the webhook
+// only records the unambiguous money fact (plus cancelling on a definitive loss).
+export function classifyDisputeClose(
+  disputeStatus: string,
+): "paid_out" | "refunded" | null {
+  if (disputeStatus === "won") return "paid_out";
+  if (disputeStatus === "lost") return "refunded";
+  return null;
+}
+
 // Records a payment status change (e.g. from a Stripe webhook), guarded by the
 // canonical payment state machine.
 export async function recordPaymentResult(

@@ -52,6 +52,8 @@ stripe.accounts.create({
    - `charge.refunded` — records refund (full → cancels booking; partial →
      `partially_refunded`)
    - `charge.dispute.created` — flags payment + booking `disputed` for admin
+   - `charge.dispute.closed` — resolves the chargeback (won → `paid_out`; lost →
+     `refunded` + cancels the booking)
    Copy the **Signing secret** → Doppler as `STRIPE_WEBHOOK_SECRET`.
 5. Redeploy so the app picks up the keys.
 
