@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { Button, Icon, buttonClasses } from "@bidspace/ui";
 
 // Recoverable route-segment error boundary. Renders inside the root layout, so
@@ -14,9 +15,8 @@ export default function RouteError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Sentry seam: when Sentry is wired (see docs/PRODUCTION-ACTIVATION.md §5),
-    // report here — Sentry.captureException(error). Console keeps a trace today.
-    console.error("Route error", error);
+    // No-op without SENTRY_DSN configured (see instrumentation-client.ts).
+    Sentry.captureException(error);
   }, [error]);
 
   return (

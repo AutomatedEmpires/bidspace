@@ -81,12 +81,33 @@ key → `NEXT_PUBLIC_POSTHOG_KEY`. Server events (`bid_submitted`, `bid_awarded`
 `review_submitted`, `network_invited`) and client `$pageview` then flow
 automatically — no code change. Verify events appear in PostHog → Activity.
 
-### 5. Sentry — project + wiring
-Not yet wired in code (kept out to avoid shipping unverifiable, build-risky
-config). To add: `pnpm --filter @bidspace/web add @sentry/nextjs`, run
-`npx @sentry/wizard@latest -i nextjs`, set `SENTRY_DSN` /
-`NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` in Doppler. Mirror the
-env-gated pattern in `apps/web/lib/analytics-server.ts` so no DSN = no-op.
+### 5. Sentry — DONE (project provisioned, SDK wired, event delivery proven)
+No founder action needed. Project `bidspace` created in Sentry org
+`automated-empires` (dashboard: https://automated-empires.sentry.io/projects/bidspace/).
+`@sentry/nextjs` is wired via `instrumentation.ts` (server/edge) +
+`instrumentation-client.ts` (browser) + `withSentryConfig` in `next.config.ts`
+(source-map upload only activates if `SENTRY_AUTH_TOKEN` is set — optional).
+Every error boundary (`error.tsx`, `global-error.tsx`) reports via
+`Sentry.captureException`. `sendDefaultPii: false` — no marketplace data rides
+along on error reports. The DSN is env-gated exactly like every other
+integration: absent `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN` = inert, verified by
+building with and without the vars set.
+
+**Proven, not assumed:** `tools/verify-sentry.ts` fired a real event that
+landed as issue `BIDSPACE-1` in the live Sentry project (confirmed via the
+Sentry API, then resolved as a deliberate test). Doppler `bidspace/dev` and
+`apps/web/.env.local` both carry the DSN today; copy the same
+`SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`/`SENTRY_ORG`/`SENTRY_PROJECT` values into
+`bidspace/prd` when promoting.
+
+**Known risk to watch on the Vercel deploy** (not reproduced locally, so not
+fixed pre-emptively): a sibling venture on this Sentry org has an open issue —
+`Could not find the module ".../app/global-error.tsx#default" in the React
+Client Manifest` — a Vercel/RSC-bundler interaction specific to
+`global-error.tsx` (907 events over 25 days on their Next 15.5.18 build). Our
+local build (Next 16.2.7) compiles `global-error.tsx` cleanly, but this is a
+platform-level quirk, not something a local build can rule out. If it recurs
+post-deploy, Sentry will now catch and report it immediately.
 
 ### 6. Vercel deploy — ready, gated on Clerk
 Team **AutomatedEmpires** (`team_0IgwjPKkR3NmPUC5ugTK3cfi`). The repo builds

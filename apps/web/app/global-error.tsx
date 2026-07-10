@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 // Last-resort boundary: catches errors in the root layout itself, so it must
 // render its own <html>/<body> and cannot depend on app chrome or fonts.
@@ -13,9 +14,8 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Sentry seam: report the root-level failure here once Sentry is wired
-    // (Sentry.captureException(error)). See docs/PRODUCTION-ACTIVATION.md §5.
-    console.error("Global error", error);
+    // No-op without SENTRY_DSN configured (see instrumentation-client.ts).
+    Sentry.captureException(error);
   }, [error]);
 
   return (

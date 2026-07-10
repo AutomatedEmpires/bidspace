@@ -36,7 +36,9 @@ into client bundles (must be a publishable/public value by design).
 | `NEXT_PUBLIC_POSTHOG_KEY` | browser | PostHog | 🔒 | analytics no-op (client `$pageview` + all server events short-circuit). **Project key, not E&E's.** |
 | `NEXT_PUBLIC_POSTHOG_HOST` | browser | PostHog | — | defaults to `https://us.i.posthog.com` |
 | `ADMIN_USER_IDS` | server | founder | 🔒 | comma-separated Clerk user ids; without it, admin access falls back to Clerk `publicMetadata.bidspaceAdmin === true` only |
-| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | server / browser | Sentry | 🔒 | error reporting off (see `docs/PRODUCTION-ACTIVATION.md` §5) |
+| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | server / browser | Sentry | ✅ (dev) | project `bidspace` provisioned in org `automated-empires`; DSN live-verified via `tools/verify-sentry.ts` (issue `BIDSPACE-1`). Copy into `prd` when promoting. Absent = inert. |
+| `SENTRY_ORG` / `SENTRY_PROJECT` | build-time (server) | Sentry | ✅ (dev) | `automated-empires` / `bidspace` — only used for source-map upload, gated on `SENTRY_AUTH_TOKEN` |
+| `SENTRY_AUTH_TOKEN` | build-time (server) | Sentry | 🔒 | optional; without it, source maps aren't uploaded but error reporting still works |
 
 ## Not used (do not set)
 
