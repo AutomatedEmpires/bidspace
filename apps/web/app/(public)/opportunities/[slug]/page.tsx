@@ -153,13 +153,20 @@ export default async function OpportunityDetailPage({
   let saved = false;
   let fitReport = null;
   if (viewerOrgId && isVendorViewer) {
-    const [savedIds, documents] = await Promise.all([
+    // The auth context's role profiles are slim (no category_tags), so load the
+    // real bidder profile for an accurate fit assessment.
+    const [savedIds, documents, profileRes] = await Promise.all([
       listSavedOpportunityIds(db, viewerOrgId),
       listDocumentsForOrganization(db, viewerOrgId),
+      db
+        .from("role_profiles")
+        .select("category_tags")
+        .eq("organization_id", viewerOrgId)
+        .eq("role_type", "bidder")
+        .maybeSingle(),
     ]);
     saved = savedIds.includes(opportunity.id);
-    const vendorProfile = viewer!.roleProfiles.find((p) => p.role_type === "bidder");
-    const profileTags = (vendorProfile as { category_tags?: string[] } | undefined)?.category_tags ?? [];
+    const profileTags = (profileRes.data as { category_tags?: string[] } | null)?.category_tags ?? [];
     fitReport = assessFit(
       {
         categoryTags: profileTags,

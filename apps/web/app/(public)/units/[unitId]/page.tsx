@@ -4,10 +4,12 @@ import { COMMERCE_LAYER, formatMoney } from "@bidspace/core";
 import {
   NotFoundError,
   ValidationError,
+  assessFit,
   canOrgViewOpportunity,
   getInventoryUnit,
   getOpportunity,
   listBidsForOpportunity,
+  listDocumentsForOrganization,
   placeBid,
 } from "@bidspace/services";
 import { notFound, redirect } from "next/navigation";
@@ -31,6 +33,7 @@ import {
 import { hasMarketplaceRole, hasOrgRole } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import { captureServerEvent } from "@/lib/analytics-server";
+import { FitPanel } from "@/components/fit-panel";
 import { BidSubmissionForm, type BidFormState } from "./bid-form";
 
 type ActiveOrgContext = NonNullable<Awaited<ReturnType<typeof getCurrentUserOrgContext>>> & {
@@ -180,6 +183,34 @@ export default async function UnitDetailPage({
     }
   }
 
+  // Explainable fit, right where the vendor decides to bid. Loads the real
+  // bidder role profile (category_tags aren't in the slim auth context) so the
+  // assessment against THIS unit's restrictions/documents is accurate.
+  const isBidder = hasMarketplaceRole("bidder", context.roleProfiles);
+  let fitReport = null;
+  if (isBidder) {
+    const [profileRes, documents] = await Promise.all([
+      db
+        .from("role_profiles")
+        .select("category_tags")
+        .eq("organization_id", context.activeDbOrganizationId)
+        .eq("role_type", "bidder")
+        .maybeSingle(),
+      listDocumentsForOrganization(db, context.activeDbOrganizationId),
+    ]);
+    const profileTags = (profileRes.data as { category_tags?: string[] } | null)?.category_tags ?? [];
+    fitReport = assessFit(
+      {
+        categoryTags: profileTags,
+        verifiedDocumentTypes: documents
+          .filter((d) => d.status === "verified")
+          .map((d) => d.document_type),
+      },
+      opportunity,
+      unit,
+    );
+  }
+
   const specs = [
     { term: "Dimensions", detail: unit.dimensions },
     { term: "Setting", detail: unit.indoor === true ? "Indoor" : unit.indoor === false ? "Outdoor" : null },
@@ -318,6 +349,7 @@ export default async function UnitDetailPage({
               />
             </PanelBody>
           </Panel>
+          {fitReport ? <FitPanel report={fitReport} className="mt-4" /> : null}
           <p className="mt-3 flex items-start gap-2 text-xs text-ink-muted dark:text-canvas-muted">
             <Icon name="shield" size={14} className="mt-0.5 shrink-0 text-moss" />
             The host selects on fit, not just price. Accepted terms are recorded on the booking and
