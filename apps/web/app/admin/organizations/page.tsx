@@ -6,6 +6,7 @@ import { Button, EmptyState, PageHeader, StatusBadge, Table, TBody, TD, TH, THea
 import { requireAdminUser } from "@/lib/admin-gate";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDate } from "@/lib/format";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export const metadata: Metadata = { title: "Organizations" };
 export const dynamic = "force-dynamic";
@@ -78,9 +79,15 @@ export default async function AdminOrganizationsPage() {
                       <form action={moderateAction}>
                         <input type="hidden" name="organizationId" value={org.id} />
                         <input type="hidden" name="status" value="suspended" />
-                        <Button type="submit" variant="ghost" size="sm" className="!text-alert">
+                        <ConfirmSubmit
+                          type="submit"
+                          variant="ghost"
+                          size="sm"
+                          className="!text-alert"
+                          confirm="Suspend this organization? It loses marketplace access until restored."
+                        >
                           Suspend
-                        </Button>
+                        </ConfirmSubmit>
                       </form>
                     ) : (
                       <form action={moderateAction}>

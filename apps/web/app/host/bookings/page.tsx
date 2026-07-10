@@ -30,6 +30,7 @@ import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateRange } from "@/lib/format";
 import { captureServerEvent } from "@/lib/analytics-server";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export const metadata: Metadata = { title: "Bookings" };
 export const dynamic = "force-dynamic";
@@ -162,9 +163,15 @@ export default async function HostBookingsPage() {
                         <form action={transitionAction}>
                           <input type="hidden" name="bookingId" value={booking.id} />
                           <input type="hidden" name="to" value="cancelled" />
-                          <Button type="submit" variant="ghost" size="sm" className="!text-alert">
+                          <ConfirmSubmit
+                            type="submit"
+                            variant="ghost"
+                            size="sm"
+                            className="!text-alert"
+                            confirm="Cancel this booking? The vendor is notified and this cannot be undone."
+                          >
                             Cancel
-                          </Button>
+                          </ConfirmSubmit>
                         </form>
                       ) : null}
                     </div>

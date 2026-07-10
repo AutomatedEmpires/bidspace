@@ -23,6 +23,7 @@ import {
 import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { captureServerEvent } from "@/lib/analytics-server";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export const metadata: Metadata = { title: "Vendor network" };
 export const dynamic = "force-dynamic";
@@ -175,9 +176,15 @@ export default async function HostNetworkPage() {
                       <form action={statusAction}>
                         <input type="hidden" name="memberId" value={member.id} />
                         <input type="hidden" name="status" value="removed" />
-                        <Button type="submit" variant="ghost" size="sm" className="!text-alert">
+                        <ConfirmSubmit
+                          type="submit"
+                          variant="ghost"
+                          size="sm"
+                          className="!text-alert"
+                          confirm="Remove this vendor from your network? They lose access to your network-only opportunities."
+                        >
                           Remove
-                        </Button>
+                        </ConfirmSubmit>
                       </form>
                     ) : null}
                   </div>

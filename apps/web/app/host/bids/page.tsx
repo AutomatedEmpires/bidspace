@@ -35,6 +35,7 @@ import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateTime } from "@/lib/format";
 import { captureServerEvent } from "@/lib/analytics-server";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export const metadata: Metadata = { title: "Bid review" };
 export const dynamic = "force-dynamic";
@@ -230,9 +231,15 @@ export default async function HostBidReviewPage({
               <form action={pipelineAction}>
                 <input type="hidden" name="bidId" value={bid.id} />
                 <input type="hidden" name="action" value="reject" />
-                <Button type="submit" variant="ghost" size="sm" className="!text-alert">
+                <ConfirmSubmit
+                  type="submit"
+                  variant="ghost"
+                  size="sm"
+                  className="!text-alert"
+                  confirm="Decline this bid? The vendor is notified and cannot be re-selected for it."
+                >
                   Decline
-                </Button>
+                </ConfirmSubmit>
               </form>
             </div>
           ) : null}
