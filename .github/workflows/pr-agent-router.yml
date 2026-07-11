@@ -109,6 +109,35 @@ jobs:
             const acknowledgements = [];
 
             if (requests.has('copilot')) {
+              const copilotLabels = [
+                ['agent:copilot-cloud', '5319e7', 'Requested Copilot cloud review'],
+                ['status:needs-cloud-review', 'fbca04', 'Awaiting cloud review'],
+              ];
+
+              for (const [name, color, description] of copilotLabels) {
+                try {
+                  await github.rest.issues.getLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name,
+                  });
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                  try {
+                    await github.rest.issues.createLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      name,
+                      color,
+                      description,
+                    });
+                  } catch (createError) {
+                    // A concurrent run may have created the label after our lookup.
+                    if (createError.status !== 422) throw createError;
+                  }
+                }
+              }
+
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
