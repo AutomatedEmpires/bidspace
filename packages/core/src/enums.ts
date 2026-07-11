@@ -298,3 +298,14 @@ export const ADMIN_ACTION_TYPE = [
   "flag",
 ] as const;
 export type AdminActionType = (typeof ADMIN_ACTION_TYPE)[number];
+
+// --- 0009_network.sql additions ---
+
+export const OPPORTUNITY_VISIBILITY = ["public", "network", "invite_only"] as const;
+export type OpportunityVisibility = (typeof OPPORTUNITY_VISIBILITY)[number];
+
+export const NETWORK_MEMBER_STATUS = ["invited", "active", "declined", "removed"] as const;
+export type NetworkMemberStatus = (typeof NETWORK_MEMBER_STATUS)[number];
+
+export const INVITATION_STATUS = ["sent", "viewed", "accepted", "declined"] as const;
+export type InvitationStatus = (typeof INVITATION_STATUS)[number];

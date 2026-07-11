@@ -7,8 +7,8 @@ import {
   hostPayoutCents,
   DEFAULT_PLATFORM_FEE_BPS,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getBooking } from "./booking.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getBooking } from "./booking";
 
 // --- Money split (D018: 10% platform commission; D020: integer cents) ---
 export interface PaymentSplit {
@@ -134,6 +134,51 @@ export async function getPayment(db: BidspaceClient, id: string): Promise<Paymen
   if (error) throw fromDbError("getPayment", error);
   if (!data) throw new NotFoundError("payment", id);
   return data as PaymentRow;
+}
+
+// Look up the payment behind a Stripe PaymentIntent (set during settlement).
+// Used by refund/dispute webhook handlers to map a Stripe event back to the
+// marketplace record. Returns null when no payment matches (e.g. an intent from
+// a different platform product).
+export async function findPaymentByStripeIntent(
+  db: BidspaceClient,
+  stripePaymentIntentId: string,
+): Promise<PaymentRow | null> {
+  const { data, error } = await db
+    .from("payments")
+    .select("*")
+    .eq("stripe_payment_intent_id", stripePaymentIntentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw fromDbError("findPaymentByStripeIntent", error);
+  return (data as PaymentRow | null) ?? null;
+}
+
+// Pure: decide the refund payment status from the charge total vs the amount
+// refunded so far. Full refund → `refunded`; a non-zero partial →
+// `partially_refunded`. Kept DB-free so it is unit-testable.
+export function classifyRefund(
+  amountCents: number,
+  amountRefundedCents: number,
+): "refunded" | "partially_refunded" | null {
+  if (!Number.isFinite(amountRefundedCents) || amountRefundedCents <= 0) return null;
+  return amountRefundedCents >= amountCents ? "refunded" : "partially_refunded";
+}
+
+// Pure: map a closed Stripe dispute's status to the resolved payment status.
+//   won            → `paid_out`  (platform retained the funds; payout proceeds)
+//   lost           → `refunded`  (chargeback succeeded; funds returned to buyer)
+//   warning_closed → null        (an early warning cleared; no money moved)
+//   anything else  → null        (still open / not a terminal outcome)
+// The booking's operational outcome stays a human/admin decision; the webhook
+// only records the unambiguous money fact (plus cancelling on a definitive loss).
+export function classifyDisputeClose(
+  disputeStatus: string,
+): "paid_out" | "refunded" | null {
+  if (disputeStatus === "won") return "paid_out";
+  if (disputeStatus === "lost") return "refunded";
+  return null;
 }
 
 // Records a payment status change (e.g. from a Stripe webhook), guarded by the
