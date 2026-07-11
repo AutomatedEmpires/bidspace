@@ -18,11 +18,26 @@ jobs:
         uses: actions/github-script@91a83c091797b22c5771b1d7178fd0fddacc73ea
         with:
           script: |
-            const association = context.payload.comment.author_association;
-            const trustedAssociations = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            const commenter = context.payload.comment.user?.login;
+            if (!commenter) {
+              core.info('Skipping comment without an attributable GitHub user.');
+              return;
+            }
 
-            if (!trustedAssociations.has(association)) {
-              core.info(`Skipping untrusted comment from ${association || 'UNKNOWN'} association.`);
+            let effectivePermission = 'none';
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: commenter,
+              });
+              effectivePermission = data.role_name || data.permission || 'none';
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            if (!new Set(['write', 'maintain', 'admin']).has(effectivePermission)) {
+              core.info(`Skipping agent request without effective write permission.`);
               return;
             }
 
@@ -30,6 +45,17 @@ jobs:
             const normalizedBody = commentBody.trim();
             if (!normalizedBody) {
               core.info('Comment body is empty; nothing to route.');
+              return;
+            }
+
+            if (commentBody.length > 8000) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: '### PR agent router\n\nRequest not routed: the triggering comment exceeds the 8,000-character agent-routing limit.',
+              });
+              core.setFailed('Agent request comment exceeds the routing payload limit.');
               return;
             }
 
@@ -53,15 +79,15 @@ jobs:
               const existing = requests.get(agent);
               if (existing) {
                 existing.sources.add(source);
-                if (!existing.prompt && nextPrompt) {
-                  existing.prompt = nextPrompt;
+                if (nextPrompt) {
+                  existing.prompts.add(nextPrompt);
                 }
                 return;
               }
 
               requests.set(agent, {
                 agent,
-                prompt: nextPrompt,
+                prompts: new Set(nextPrompt ? [nextPrompt] : []),
                 sources: new Set([source]),
               });
             };
@@ -159,14 +185,15 @@ jobs:
                 continue;
               }
 
+              const prompt = Array.from(request.prompts).join('\n\n');
+
               await github.rest.repos.createDispatchEvent({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 event_type: 'pr-agent-requested',
                 client_payload: {
                   agent: request.agent,
-                  prompt: request.prompt,
-                  comment_body: commentBody,
+                  prompt,
                   comment_id: comment.id,
                   comment_url: commentUrl,
                   issue_number: issueNumber,
@@ -177,9 +204,8 @@ jobs:
                 },
               });
 
-              const promptNote = request.prompt ? ` Prompt: ${request.prompt}` : '';
               acknowledgements.push(
-                `- ${request.agent}: dispatch event sent from [the triggering comment](${commentUrl}).${promptNote}`
+                `- ${request.agent}: dispatch event sent from [the triggering comment](${commentUrl}).`
               );
             }
 
