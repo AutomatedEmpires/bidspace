@@ -1,0 +1,93 @@
+name: Agent Build Task Router
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  route-build-task:
+    if: >-
+      github.event.issue.pull_request == null &&
+      startsWith(github.event.issue.title, '[build]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply routing labels from build task form
+        uses: actions/github-script@91a83c091797b22c5771b1d7178fd0fddacc73ea
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+
+            const captureField = (heading) => {
+              const match = body.match(new RegExp(`## ${heading}\\r?\\n+([^\\r\\n]+)`, 'i'));
+              return match ? match[1].trim() : null;
+            };
+
+            const labelDefinitions = new Map([
+              ['area:sprint-zero', ['0e8a16', 'Sprint-zero foundation work']],
+              ['area:design-system', ['1d76db', 'Design-system work']],
+              ['area:contracts', ['1d76db', 'Shared contract work']],
+              ['area:ui', ['1d76db', 'User-interface work']],
+              ['area:database', ['1d76db', 'Database work']],
+              ['area:auth', ['1d76db', 'Authentication work']],
+              ['area:billing', ['1d76db', 'Billing work']],
+              ['area:analytics', ['1d76db', 'Analytics work']],
+              ['area:docs', ['1d76db', 'Documentation work']],
+              ['area:agent-governance', ['1d76db', 'Agent-governance work']],
+              ['agent:vscode', ['5319e7', 'Suggested agent: VS Code']],
+              ['agent:codex', ['5319e7', 'Suggested agent: Codex']],
+              ['agent:cursor', ['5319e7', 'Suggested agent: Cursor']],
+              ['agent:claude', ['5319e7', 'Suggested agent: Claude']],
+              ['agent:opus', ['5319e7', 'Suggested agent: Opus']],
+              ['risk:low', ['0e8a16', 'Low-risk change']],
+              ['risk:medium', ['fbca04', 'Medium-risk change']],
+              ['risk:high', ['d93f0b', 'High-risk change']],
+              ['risk:approval-required', ['b60205', 'Approval required before execution']],
+            ]);
+            const allowedLabels = new Set(labelDefinitions.keys());
+
+            const labels = [
+              captureField('Area'),
+              captureField('Suggested agent'),
+              captureField('Risk level'),
+            ].filter((label, index, list) => label && allowedLabels.has(label) && list.indexOf(label) === index);
+
+            if (labels.length === 0) {
+              core.info('No routing labels found in build task body.');
+              return;
+            }
+
+            for (const label of labels) {
+              const [color, description] = labelDefinitions.get(label);
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label,
+                    color,
+                    description,
+                  });
+                } catch (createError) {
+                  // A concurrent run may have created the label after our lookup.
+                  if (createError.status !== 422) throw createError;
+                }
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              labels,
+            });
