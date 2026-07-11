@@ -30,6 +30,7 @@ jobs:
             const agent = `${payload.agent || ''}`.trim().toLowerCase();
             const issueNumber = Number(payload.issue_number);
             const pullRequestNumber = Number(payload.pr_number);
+            const commentId = Number(payload.comment_id);
 
             const routes = {
               codex: {
@@ -86,6 +87,10 @@ jobs:
             }
 
             const prompt = `${payload.prompt || ''}`.trim();
+            if (prompt.length > 8000) {
+              core.setFailed('Agent prompt exceeds the 8,000-character routing limit.');
+              return;
+            }
             if (agent === 'git' && !prompt) {
               await createIssueComment([
                 '### git-agent request needs a prompt',
@@ -96,14 +101,33 @@ jobs:
               return;
             }
 
-            const { data: pull } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequestNumber,
-            });
+            if (!Number.isSafeInteger(commentId) || commentId <= 0) {
+              core.setFailed('Dispatch payload is missing a valid trigger comment id.');
+              return;
+            }
+
+            const [{ data: pull }, { data: triggerComment }] = await Promise.all([
+              github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullRequestNumber,
+              }),
+              github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: commentId,
+              }),
+            ]);
+
+            const idempotencySource = `${context.repo.owner}/${context.repo.repo}:${commentId}:${agent}`;
+            const idempotencyKey = require('node:crypto')
+              .createHash('sha256')
+              .update(idempotencySource)
+              .digest('hex');
 
             const requestBody = {
               agent,
+              idempotency_key: idempotencyKey,
               requested_at: payload.requested_at || new Date().toISOString(),
               requested_by: payload.sender_login || context.actor,
               sources: payload.sources || [],
@@ -130,9 +154,9 @@ jobs:
                 },
               },
               trigger_comment: {
-                id: payload.comment_id || null,
+                id: commentId,
                 url: payload.comment_url || null,
-                body: payload.comment_body || '',
+                body: `${triggerComment.body || ''}`.slice(0, 8000),
               },
             };
 
@@ -144,17 +168,57 @@ jobs:
             if (route.token) {
               headers.authorization = `Bearer ${route.token}`;
             }
+            headers['idempotency-key'] = idempotencyKey;
+
+            const readResponsePrefix = async (httpResponse, maxBytes) => {
+              if (!httpResponse.body) return '';
+
+              const reader = httpResponse.body.getReader();
+              const decoder = new TextDecoder();
+              const chunks = [];
+              let bytesRead = 0;
+
+              try {
+                while (bytesRead < maxBytes) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  const remaining = maxBytes - bytesRead;
+                  const boundedValue = value.byteLength > remaining
+                    ? value.subarray(0, remaining)
+                    : value;
+                  chunks.push(decoder.decode(boundedValue, { stream: true }));
+                  bytesRead += boundedValue.byteLength;
+
+                  if (value.byteLength > remaining || bytesRead >= maxBytes) {
+                    await reader.cancel();
+                    break;
+                  }
+                }
+                chunks.push(decoder.decode());
+                return chunks.join('');
+              } finally {
+                reader.releaseLock();
+              }
+            };
 
             let response;
             let rawResponse;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30_000);
             try {
               response = await fetch(route.url, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(requestBody),
-                signal: AbortSignal.timeout(30_000),
+                signal: controller.signal,
               });
-              rawResponse = await response.text();
+              if (response.ok) {
+                rawResponse = await readResponsePrefix(response, 4096);
+              } else if (response.body) {
+                await response.body.cancel();
+                rawResponse = '';
+              }
             } catch (error) {
               await createIssueComment([
                 `### ${route.label} dispatch failed`,
@@ -165,6 +229,8 @@ jobs:
               ].join('\n'));
               core.setFailed('Webhook request timed out or could not be completed.');
               return;
+            } finally {
+              clearTimeout(timeout);
             }
 
             if (!response.ok) {
@@ -196,5 +262,4 @@ jobs:
               `The PR agent router forwarded this request to the configured ${route.label} webhook.`,
               `Source: ${payload.comment_url || pull.html_url}`,
               requestId ? `Request id: ${requestId}` : `Webhook status: HTTP ${response.status}`,
-              prompt ? `Prompt: ${prompt}` : null,
             ].filter((line) => line !== null).join('\n'));
