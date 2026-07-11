@@ -1,15 +1,16 @@
-import type { BidspaceClient, BidRow } from "@bidspace/db";
+import type { BidspaceClient, BidRow, InventoryUnitRow } from "@bidspace/db";
 import {
   bidCreateSchema,
   type BidCreate,
   type BidStatus,
+  type InventoryUnitStatus,
   type OpportunityStatus,
   bidStatusTransitions,
   canTransition,
 } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getOpportunity } from "./opportunities.js";
-import { getInventoryUnit } from "./inventory-units.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getOpportunity } from "./opportunities";
+import { getInventoryUnit } from "./inventory-units";
 
 // Pure, persistence-free guard for whether a bid may be placed.
 export interface BidEligibilityInput {
@@ -51,6 +52,37 @@ export function visibleBidsFor<T extends { bidder_organization_id: string }>(
   return bids.filter((b) => b.bidder_organization_id === viewer.organizationId);
 }
 
+export function assertBidTargetsUnitOpportunity(
+  opportunityId: string,
+  inventoryUnit: Pick<InventoryUnitRow, "id" | "opportunity_id">,
+): void {
+  if (inventoryUnit.opportunity_id === opportunityId) {
+    return;
+  }
+
+  throw new ValidationError(
+    `Inventory unit ${inventoryUnit.id} does not belong to opportunity ${opportunityId}`,
+  );
+}
+
+const BIDDABLE_INVENTORY_UNIT_STATUSES: readonly InventoryUnitStatus[] = [
+  "available",
+  "receiving_bids",
+  "shortlisted",
+];
+
+export function assertInventoryUnitAcceptsBid(
+  inventoryUnit: Pick<InventoryUnitRow, "status">,
+): void {
+  if (BIDDABLE_INVENTORY_UNIT_STATUSES.includes(inventoryUnit.status)) {
+    return;
+  }
+
+  throw new ValidationError(
+    `Inventory unit is not accepting bids (status: ${inventoryUnit.status})`,
+  );
+}
+
 // Place a bid against an opportunity (and optionally a specific inventory unit).
 // Bids are created `submitted` and sealed by default (D019).
 export async function placeBid(db: BidspaceClient, input: BidCreate): Promise<BidRow> {
@@ -65,6 +97,8 @@ export async function placeBid(db: BidspaceClient, input: BidCreate): Promise<Bi
   let minimumBidCents = opportunity.minimum_bid_cents;
   if (b.inventoryUnitId) {
     const unit = await getInventoryUnit(db, b.inventoryUnitId);
+    assertBidTargetsUnitOpportunity(b.opportunityId, unit);
+    assertInventoryUnitAcceptsBid(unit);
     minimumBidCents = unit.minimum_bid_cents ?? opportunity.minimum_bid_cents;
   }
   assertBidAcceptable({
@@ -163,3 +197,58 @@ export async function counterBid(
 // Host accepted the bid and now requests payment, moving it into payment_pending.
 export const requestBidPayment = (db: BidspaceClient, id: string) =>
   transitionBid(db, id, "payment_pending");
+
+// --- Contextual bid lists for cockpit surfaces --------------------------------
+
+export interface BidWithContext extends BidRow {
+  opportunity: { id: string; title: string; slug: string | null; status: string } | null;
+  inventory_unit: { id: string; name: string } | null;
+  bidder_organization: { id: string; name: string; logo_url: string | null; verification_status: string } | null;
+}
+
+const BID_CONTEXT_SELECT = `*,
+  opportunity:opportunities(id, title, slug, status),
+  inventory_unit:inventory_units(id, name),
+  bidder_organization:organizations!bids_bidder_organization_id_fkey(id, name, logo_url, verification_status)`;
+
+// All bids a vendor org has placed, newest first — the vendor /bids surface.
+export async function listBidsForBidderOrg(
+  db: BidspaceClient,
+  bidderOrganizationId: string,
+): Promise<BidWithContext[]> {
+  const { data, error } = await db
+    .from("bids")
+    .select(BID_CONTEXT_SELECT)
+    .eq("bidder_organization_id", bidderOrganizationId)
+    .order("created_at", { ascending: false });
+  if (error) throw fromDbError("listBidsForBidderOrg", error);
+  return (data ?? []) as unknown as BidWithContext[];
+}
+
+// All incoming bids across a host org's opportunities — the host review pipeline.
+export async function listBidsForHostOrg(
+  db: BidspaceClient,
+  hostOrganizationId: string,
+  options: { statuses?: readonly BidStatus[] } = {},
+): Promise<BidWithContext[]> {
+  let query = db
+    .from("bids")
+    .select(BID_CONTEXT_SELECT)
+    .eq("host_organization_id", hostOrganizationId)
+    .order("created_at", { ascending: false });
+  if (options.statuses?.length) {
+    query = query.in("status", [...options.statuses]);
+  }
+  const { data, error } = await query;
+  if (error) throw fromDbError("listBidsForHostOrg", error);
+  return (data ?? []) as unknown as BidWithContext[];
+}
+
+// Statuses that still demand a host decision, in review order.
+export const HOST_DECISION_STATUSES: readonly BidStatus[] = [
+  "submitted",
+  "viewed",
+  "shortlisted",
+  "countered",
+  "waitlisted",
+];

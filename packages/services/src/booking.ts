@@ -1,8 +1,8 @@
 import type { BidspaceClient, BookingRow } from "@bidspace/db";
 import { type BookingStatus, bookingStatusTransitions, canTransition } from "@bidspace/core";
-import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors.js";
-import { getBid, transitionBid } from "./bidding.js";
-import { getInventoryUnit } from "./inventory-units.js";
+import { NotFoundError, TransitionError, ValidationError, fromDbError } from "./errors";
+import { getBid, transitionBid } from "./bidding";
+import { getInventoryUnit } from "./inventory-units";
 
 // A booking is created in `pending_payment` as soon as a host moves an accepted
 // bid into payment, then advances to `confirmed` once payment settles. Creating
@@ -80,4 +80,32 @@ export async function settleBookingPayment(
   await transitionBid(db, booking.bid_id, "paid");
   await transitionBid(db, booking.bid_id, "booked");
   return confirmed;
+}
+
+// --- Contextual booking lists --------------------------------------------------
+
+export interface BookingWithContext extends BookingRow {
+  inventory_unit: { id: string; name: string; opportunity_id: string } | null;
+  host_organization: { id: string; name: string } | null;
+  bidder_organization: { id: string; name: string } | null;
+}
+
+const BOOKING_CONTEXT_SELECT = `*,
+  inventory_unit:inventory_units(id, name, opportunity_id),
+  host_organization:organizations!bookings_host_organization_id_fkey(id, name),
+  bidder_organization:organizations!bookings_bidder_organization_id_fkey(id, name)`;
+
+export async function listBookingsForOrg(
+  db: BidspaceClient,
+  organizationId: string,
+  side: "host" | "bidder",
+): Promise<BookingWithContext[]> {
+  const column = side === "host" ? "host_organization_id" : "bidder_organization_id";
+  const { data, error } = await db
+    .from("bookings")
+    .select(BOOKING_CONTEXT_SELECT)
+    .eq(column, organizationId)
+    .order("starts_at", { ascending: false });
+  if (error) throw fromDbError("listBookingsForOrg", error);
+  return (data ?? []) as unknown as BookingWithContext[];
 }
