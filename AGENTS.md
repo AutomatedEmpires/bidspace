@@ -10,9 +10,9 @@ The Inventory Unit is the canonical product concept. Preserve the map-first, mob
 
 ## 2. Business vision
 
-Build a trustworthy spatial-commerce marketplace that lets vendors describe rights-controlled inventory and lets buyers compare location, audience, constraints, and commercial terms without obscuring host discretion.
+Build a trustworthy spatial-commerce marketplace in which hosts and venue owners publish rights-controlled Inventory Units and vendors are demand-side bidders comparing location, audience, constraints, and commercial terms without obscuring host discretion.
 
-Do not scrape auction listings into marketplace inventory. Build a vendor-prospect pipeline from lawful public business-contact research instead. Prospects are leads, not live listings; publication requires vendor onboarding, verified rights, provenance, and the relevant approvals.
+Do not scrape auction listings into marketplace inventory. Build a vendor-prospect pipeline from lawful public business-contact research instead. Vendor prospects are bidder-side leads and never inventory. Inventory publication requires host/venue-owner onboarding, verified rights, provenance, and the relevant approvals.
 
 Money movement is not the first milestone. The Inventory Unit, product intent, permissions, curated selection model, and operational/legal ownership must be sound before marketplace payments can activate.
 
@@ -32,7 +32,7 @@ Before work, record `git status -sb`, the current branch and HEAD, open PRs, the
 - Documentation: `docs/<lane>/<slug>`
 - Chores: `chore/<lane>/<slug>`
 
-Use kebab case. Never direct-push `main`, merge, delete branches, rewrite history, force-push, or overwrite another agent’s lane or artifact. Keep PRs small, cite the governing decision/spec, and tie work to an issue and acceptance criteria. The builder is not the sole approver.
+Use kebab case. Implementing agents/builders never direct-push `main`, merge their own PRs, delete unmerged branches, rewrite history, force-push, or overwrite another agent’s lane or artifact. A designated maintainer or approved automation may merge after independent review and green required checks, then delete the merged branch. Keep PRs small, cite the governing decision/spec, and tie work to an issue and acceptance criteria. The builder is not the sole approver.
 
 ## 5. Required checks before PR
 
@@ -85,7 +85,7 @@ Maintain the implementation/source-of-truth doctrine and monorepo boundaries:
 - `packages/ui/` and `packages/core/` own shared UI and domain logic.
 - `docs/` owns deduplicated decisions, architecture, data model, API, roadmap, go-to-market, and integration documentation.
 
-Use the repository’s current shared design and icon conventions unless a scoped, dated decision changes them. Preserve accessibility, clear card composition, map/card parity, and touch-friendly mobile behavior.
+D023 is the web design authority: Fraunces and Instrument Sans, plaster/structural ink, survey orange for commitment, blueprint blue for spatial/live context, flat drafting geometry, and the semantic Phosphor registry. Preserve accessibility, clear card composition, map/card parity, and touch-friendly mobile behavior; do not add a competing icon or component system.
 
 The pinned baseline remains Windows 11 ARM64 → WSL2 Ubuntu 24.04, Node 24.16.0, pnpm 10.12.4, Turborepo, and TypeScript end to end. CI uses the organization reusable workflow. Runtime, dependency, package-boundary, or provider changes require an explicit dated decision.
 
