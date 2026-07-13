@@ -25,14 +25,14 @@ export default async function VendorBookingsPage() {
       <PageHeader
         kicker="Bookings"
         title="Your confirmed positions"
-        lede="Once paid, each booking carries the accepted terms, dates, and operational details you need on the day."
+        lede="Legacy test records appear here for workflow design. Payments and binding placements are disabled during founder preview."
       />
 
       {needsPayment.length > 0 ? (
         <div className="rounded-[4px] border border-signal/40 bg-signal/[0.05] p-4">
           <p className="text-sm font-semibold text-signal-deep dark:text-signal-bright">
-            {needsPayment.length} booking{needsPayment.length === 1 ? "" : "s"} awaiting payment —
-            positions are not held indefinitely.
+            {needsPayment.length} legacy test record{needsPayment.length === 1 ? "" : "s"} reached the payment stage.
+            Checkout remains disabled.
           </p>
         </div>
       ) : null}
@@ -64,9 +64,9 @@ export default async function VendorBookingsPage() {
                 <TD className="text-right">
                   <Link
                     href={`/bookings/${booking.id}`}
-                    className={buttonClasses(booking.status === "pending_payment" ? "signal" : "secondary", "sm")}
+                    className={buttonClasses("secondary", "sm")}
                   >
-                    {booking.status === "pending_payment" ? "Pay & confirm" : "Open"}
+                    Open preview
                   </Link>
                 </TD>
               </tr>
@@ -77,7 +77,7 @@ export default async function VendorBookingsPage() {
         <EmptyState
           icon="booking"
           title="No bookings yet"
-          body="When a host accepts your bid and payment completes, the booking lives here with everything you need to operate."
+          body="Future confirmed placements will live here after commercial, legal, and payment decisions are approved."
           actions={
             <Link href="/bids" className={buttonClasses("secondary", "sm")}>
               Check your bids

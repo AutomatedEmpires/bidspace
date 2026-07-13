@@ -277,7 +277,7 @@ export const DOCUMENT_STATUS = [
 ] as const;
 export type DocumentStatus = (typeof DOCUMENT_STATUS)[number];
 
-export const MESSAGE_THREAD_CONTEXT = ["bid", "booking", "opportunity", "support"] as const;
+export const MESSAGE_THREAD_CONTEXT = ["bid", "application", "booking", "opportunity", "support"] as const;
 export type MessageThreadContext = (typeof MESSAGE_THREAD_CONTEXT)[number];
 
 export const PERFORMANCE_METRIC_SOURCE = [
@@ -309,3 +309,19 @@ export type NetworkMemberStatus = (typeof NETWORK_MEMBER_STATUS)[number];
 
 export const INVITATION_STATUS = ["sent", "viewed", "accepted", "declined"] as const;
 export type InvitationStatus = (typeof INVITATION_STATUS)[number];
+
+// --- 0014 marketplace foundation additions ---
+
+export const APPLICATION_STATUS = [
+  "draft",
+  "invited",
+  "submitted",
+  "under_review",
+  "shortlisted",
+  "approved",
+  "declined",
+  "waitlisted",
+  "withdrawn",
+  "expired",
+] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUS)[number];

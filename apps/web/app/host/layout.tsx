@@ -4,15 +4,16 @@ import { requireHostContext } from "@/lib/org-context";
 
 const NAV: CockpitNavItem[] = [
   { href: "/host", label: "Command", icon: "command", exact: true, mobile: true },
-  { href: "/host/opportunities", label: "Opportunities", icon: "opportunity", mobile: true },
-  { href: "/host/bids", label: "Bid review", icon: "bid", mobile: true },
+  { href: "/host/opportunities", label: "Spaces", icon: "opportunity", mobile: true },
+  { href: "/host/bids", label: "Placement review", icon: "bid", mobile: true },
   { href: "/host/bookings", label: "Bookings", icon: "booking", mobile: true },
   { href: "/host/venues", label: "Locations", icon: "venue" },
   { href: "/host/events", label: "Events", icon: "event" },
   { href: "/host/calendar", label: "Calendar", icon: "calendar", mobile: true },
   { href: "/host/network", label: "Vendor network", icon: "network" },
+  { href: "/host/vendors", label: "Discover vendors", icon: "vendor" },
   { href: "/messages", label: "Messages", icon: "message" },
-  { href: "/host/settings", label: "Payouts & settings", icon: "payout" },
+  { href: "/host/settings", label: "Settings & future fees", icon: "payout" },
 ];
 
 export default async function HostLayout({ children }: { children: ReactNode }) {

@@ -6,6 +6,7 @@ export * from "./events";
 export * from "./opportunities";
 export * from "./inventory-units";
 export * from "./bidding";
+export * from "./applications";
 export * from "./discovery";
 export * from "./payments";
 export * from "./booking";

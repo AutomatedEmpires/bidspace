@@ -30,6 +30,7 @@ export async function createOpportunity(
       commerce_layer: o.commerceLayer ?? null,
       minimum_bid_cents: o.minimumBidCents ?? null,
       bid_deadline: o.bidDeadline ?? null,
+      allocation_mode: o.allocationMode,
       status: "draft" satisfies OpportunityStatus,
     })
     .select("*")
@@ -72,6 +73,8 @@ export interface OpportunityUpdatePatch {
   minimumBidCents?: number | null;
   bidDeadline?: string | null;
   imageUrls?: string[];
+  allocationMode?: OpportunityRow["allocation_mode"];
+  requirements?: Record<string, unknown>;
 }
 
 // Draft-stage edits. Published listings only accept the fields that do not
@@ -100,6 +103,8 @@ export async function updateOpportunity(
   if (p.minimumBidCents !== undefined) update.minimum_bid_cents = p.minimumBidCents;
   if (p.bidDeadline !== undefined) update.bid_deadline = p.bidDeadline;
   if (p.imageUrls !== undefined) update.image_urls = p.imageUrls;
+  if (p.allocationMode !== undefined) update.allocation_mode = p.allocationMode;
+  if (p.requirements !== undefined) update.requirements = p.requirements;
   if (Object.keys(update).length === 0) return getOpportunity(db, id);
 
   const { data, error } = await db
@@ -192,6 +197,7 @@ export async function duplicateOpportunityForWindow(
       requirements: source.requirements,
       image_urls: source.image_urls,
       visibility: source.visibility,
+      allocation_mode: source.allocation_mode,
       status: "draft" satisfies OpportunityStatus,
     })
     .select("*")

@@ -74,6 +74,7 @@ export default async function VendorProfilePage({
   ).count ?? 0;
 
   const ratings = aggregateReviews(reviews);
+  const details = profile.profile_details ?? {};
   const trust = buildTrustSignals({
     organization,
     completedBookings,
@@ -105,6 +106,22 @@ export default async function VendorProfilePage({
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_340px]">
         <div className="grid content-start gap-10">
+          {(details.pitchToHosts || details.setupType || details.spaceNeeds) ? (
+            <section>
+              <h2 className="font-display text-xl font-semibold">A fit for your space</h2>
+              {details.pitchToHosts ? (
+                <p className="mt-3 max-w-3xl text-[15px] leading-relaxed">{details.pitchToHosts}</p>
+              ) : null}
+              <dl className="mt-5 grid gap-4 rounded-[4px] border border-line bg-surface p-5 text-sm dark:bg-surface-dark sm:grid-cols-2">
+                {details.setupType ? <div><dt className="kicker mb-1">Setup</dt><dd>{details.setupType}</dd></div> : null}
+                {details.spaceNeeds ? <div><dt className="kicker mb-1">Space needs</dt><dd>{details.spaceNeeds}</dd></div> : null}
+                {details.powerNeeds ? <div><dt className="kicker mb-1">Power</dt><dd>{details.powerNeeds}</dd></div> : null}
+                {details.waterNeeds ? <div><dt className="kicker mb-1">Water</dt><dd>{details.waterNeeds}</dd></div> : null}
+                {details.serviceArea ? <div><dt className="kicker mb-1">Service area</dt><dd>{details.serviceArea}</dd></div> : null}
+                {details.availability ? <div><dt className="kicker mb-1">Availability</dt><dd>{details.availability}</dd></div> : null}
+              </dl>
+            </section>
+          ) : null}
           {profile.gallery_urls.length > 0 ? (
             <section>
               <h2 className="font-display text-xl font-semibold">Portfolio</h2>
@@ -148,6 +165,19 @@ export default async function VendorProfilePage({
                   </Panel>
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          {details.priorEvents?.length ? (
+            <section>
+              <h2 className="font-display text-xl font-semibold">Prior events &amp; placements</h2>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {details.priorEvents.map((eventName) => (
+                  <li key={eventName} className="flex items-center gap-2 rounded-[3px] border border-line px-3 py-2 text-sm">
+                    <Icon name="event" size={15} className="text-ink-muted" /> {eventName}
+                  </li>
+                ))}
+              </ul>
             </section>
           ) : null}
         </div>
@@ -203,6 +233,18 @@ export default async function VendorProfilePage({
                   <Icon name="pin" size={15} />
                   Travels up to {profile.service_radius_miles} miles
                 </p>
+              </PanelBody>
+            </Panel>
+          ) : null}
+          {details.socialLinks?.length ? (
+            <Panel>
+              <PanelHeader title="Links" kicker="Vendor-provided" />
+              <PanelBody className="grid gap-2 text-sm">
+                {details.socialLinks.map((url) => (
+                  <a key={url} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-plan hover:underline dark:text-plan-bright">
+                    <Icon name="external" size={14} /> {new URL(url).hostname}
+                  </a>
+                ))}
               </PanelBody>
             </Panel>
           ) : null}

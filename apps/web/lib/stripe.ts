@@ -1,18 +1,20 @@
 import "server-only";
 import Stripe from "stripe";
 import type { PaymentGateway, ConnectChargeParams } from "@bidspace/services";
+import { MARKETPLACE_STATE, assertPaymentsEnabled } from "@/lib/marketplace-state";
 
-// Stripe Connect wiring (D021). Every entry point is env-gated: without
-// STRIPE_SECRET_KEY the marketplace runs with payments honestly disabled —
-// no fake payment state, ever.
+// Dormant Stripe adapter retained for a future, separately approved phase.
+// A secret alone can never activate money movement: the checked-in founder
+// gate must also be changed in marketplace-state.ts.
 
 export function isStripeEnabled(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY);
+  return MARKETPLACE_STATE.paymentsEnabled && Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
 let cached: Stripe | null = null;
 
 export function getStripe(): Stripe {
+  assertPaymentsEnabled();
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
     throw new Error(

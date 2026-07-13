@@ -3,15 +3,14 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * Canonical marketplace loop — the single E2E that matters (mandate item 7).
  *
- * host signs up → org created → onboards → publishes opportunity + unit →
- * vendor signs up → onboards → discovers → bids → host shortlists → counters →
- * vendor accepts → pays (Stripe test card) → booking exists → 10% fee + payout
- * state correct.
+ * host signs in → publishes a space → vendor discovers and bids → host
+ * shortlists and selects for placement planning → vendor sees the preview
+ * selection. No payment, booking, or binding commitment is created.
  *
  * GATING: this suite is skipped unless a fully-credentialed target is provided
  * via env. It requires a deployed BidSpace with a real Clerk instance (password
- * auth enabled) and Stripe in test mode. It is complete logic, not a stub — it
- * needs credentials, not more design.
+ * auth enabled). It is complete logic, not a stub — it needs credentials, not
+ * more design. Payment credentials are deliberately irrelevant.
  */
 
 const BASE = process.env.BIDSPACE_E2E_BASE_URL;
@@ -23,9 +22,6 @@ const VENDOR_PASSWORD = process.env.BIDSPACE_E2E_VENDOR_PASSWORD;
 const CREDENTIALED = Boolean(
   BASE && HOST_EMAIL && HOST_PASSWORD && VENDOR_EMAIL && VENDOR_PASSWORD,
 );
-
-// Stripe test card that always succeeds.
-const TEST_CARD = { number: "4242 4242 4242 4242", exp: "12 / 34", cvc: "123", zip: "99202" };
 
 // Sign in an existing test user through the Clerk-hosted form. (Sign-up with
 // email verification is exercised manually per the runbook; automated runs use
@@ -57,7 +53,7 @@ test.describe("canonical marketplace loop", () => {
   const stamp = process.env.BIDSPACE_E2E_STAMP ?? "e2e";
   const opportunityTitle = `E2E Night Market ${stamp}`;
 
-  test("host publishes, vendor bids, host awards, vendor pays, fee + payout correct", async ({
+  test("host publishes, vendor bids, host selects without creating payment", async ({
     page,
   }) => {
     // ---- HOST: publish an opportunity with one unit --------------------------
@@ -104,35 +100,18 @@ test.describe("canonical marketplace loop", () => {
     await expect(page.getByText(/bid submitted/i)).toBeVisible();
     await signOut(page);
 
-    // ---- HOST: review → award (accept, request payment, create booking) -----
+    // ---- HOST: review → non-binding preview selection -----------------------
     await signIn(page, HOST_EMAIL!, HOST_PASSWORD!);
     await page.goto("/host/bids");
-    const bidCard = page.locator("section", { hasText: /needs your decision/i });
+    const bidCard = page.locator("section", { hasText: /bids needing review/i });
     await bidCard.getByRole("button", { name: /shortlist/i }).first().click().catch(() => {});
-    await page.getByRole("button", { name: /award & request payment/i }).first().click();
+    await page.getByRole("button", { name: /select for placement planning/i }).first().click();
     await signOut(page);
 
-    // ---- VENDOR: pay via Stripe Checkout (test mode) ------------------------
+    // ---- VENDOR: selection is visible; no checkout exists -------------------
     await signIn(page, VENDOR_EMAIL!, VENDOR_PASSWORD!);
-    await page.goto("/bookings");
-    await page.getByRole("link", { name: /pay & confirm|pay/i }).first().click();
-    await page.getByRole("button", { name: /pay .* securely/i }).click();
-
-    // Stripe-hosted Checkout.
-    await page.waitForURL(/checkout\.stripe\.com/);
-    await page.getByPlaceholder(/card number/i).fill(TEST_CARD.number);
-    await page.getByPlaceholder(/mm \/ yy/i).fill(TEST_CARD.exp);
-    await page.getByPlaceholder(/cvc/i).fill(TEST_CARD.cvc);
-    await page.getByPlaceholder(/zip/i).fill(TEST_CARD.zip).catch(() => {});
-    await page.getByTestId("hosted-payment-submit-button").click();
-
-    // ---- Back on BidSpace: booking confirmed, terms + fee correct -----------
-    await page.waitForURL(/\/bookings\//);
-    await expect(page.getByText(/payment received|confirmed/i)).toBeVisible({ timeout: 30_000 });
-
-    // Fee provenance is asserted server-side by tools/live-loop-check.ts
-    // ($280 → $28 fee → $252 payout); this journey proves the same path with a
-    // real Stripe charge attached and the webhook settling the booking.
-    await expect(page.getByText(/\$280\.00/)).toBeVisible();
+    await page.goto("/bids");
+    await expect(page.getByText(/accepted/i).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /pay|checkout/i })).toHaveCount(0);
   });
 });

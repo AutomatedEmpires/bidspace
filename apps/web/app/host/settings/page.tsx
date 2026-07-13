@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { buildTrustSignals, listDocumentsForOrganization, listReviewsForOrganization } from "@bidspace/services";
 import type { OrganizationRow } from "@bidspace/db";
 import {
-  Button,
   DescriptionList,
   EmptyState,
   Icon,
@@ -15,9 +13,8 @@ import {
 } from "@bidspace/ui";
 import { requireHostContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
-import { createConnectOnboardingLink, getConnectAccountStatus, isStripeEnabled } from "@/lib/stripe";
 
-export const metadata: Metadata = { title: "Payouts & settings" };
+export const metadata: Metadata = { title: "Settings & future fees" };
 export const dynamic = "force-dynamic";
 
 export default async function HostSettingsPage() {
@@ -32,12 +29,6 @@ export default async function HostSettingsPage() {
   if (!organization) {
     return <EmptyState icon="warning" title="Organization record not found" />;
   }
-
-  const stripeEnabled = isStripeEnabled();
-  const accountStatus =
-    stripeEnabled && organization.stripe_account_id
-      ? await getConnectAccountStatus(organization.stripe_account_id).catch(() => null)
-      : null;
 
   const [documents, reviews] = await Promise.all([
     listDocumentsForOrganization(db, orgId),
@@ -57,93 +48,33 @@ export default async function HostSettingsPage() {
     currentDocuments: documents,
   });
 
-  async function connectPayoutsAction() {
-    "use server";
-    const current = await requireHostContext();
-    const serverDb = tryGetDb();
-    if (!serverDb || !isStripeEnabled()) return;
-    const org = (
-      await serverDb.from("organizations").select("*").eq("id", current.activeDbOrganizationId).maybeSingle()
-    ).data as OrganizationRow | null;
-    if (!org) return;
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const { accountId, url } = await createConnectOnboardingLink({
-      existingAccountId: org.stripe_account_id,
-      organizationName: org.name,
-      email: org.email ?? undefined,
-      returnUrl: `${siteUrl}/host/settings`,
-      refreshUrl: `${siteUrl}/host/settings`,
-    });
-    if (!org.stripe_account_id) {
-      await serverDb.from("organizations").update({ stripe_account_id: accountId }).eq("id", org.id);
-    }
-    redirect(url);
-  }
-
   return (
     <div className="grid gap-8">
       <PageHeader
         kicker="Settings"
         title={organization.name}
-        lede="Payout readiness and trust standing for your organization."
+        lede="Organization trust and the dormant commercial model for this founder preview."
         actions={<StatusBadge status={organization.status} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel>
-          <PanelHeader title="Payouts" kicker="Stripe Connect" />
+          <PanelHeader title="Future host fees" kicker="Dormant — founder approval required" />
           <PanelBody className="grid gap-4">
-            {!stripeEnabled ? (
-              <p className="rounded-[3px] border border-line bg-canvas p-3 text-sm text-ink-muted dark:bg-ink dark:text-canvas-muted">
-                Payments are not enabled in this environment — STRIPE_SECRET_KEY is not configured.
-                Once keys are set via Doppler, hosts connect payouts from this page.
-              </p>
-            ) : organization.stripe_account_id ? (
-              <>
-                <DescriptionList
-                  columns={1}
-                  items={[
-                    { term: "Connected account", detail: organization.stripe_account_id },
-                    {
-                      term: "Charges",
-                      detail: accountStatus ? (accountStatus.chargesEnabled ? "Enabled" : "Not yet enabled") : "Unknown",
-                    },
-                    {
-                      term: "Payouts",
-                      detail: accountStatus ? (accountStatus.payoutsEnabled ? "Enabled" : "Not yet enabled") : "Unknown",
-                    },
-                  ]}
-                />
-                {accountStatus && !accountStatus.detailsSubmitted ? (
-                  <form action={connectPayoutsAction}>
-                    <Button type="submit" variant="signal" size="md">
-                      <Icon name="payout" size={17} />
-                      Finish Stripe onboarding
-                    </Button>
-                  </form>
-                ) : (
-                  <p className="flex items-center gap-2 text-sm font-medium text-moss dark:text-moss-bright">
-                    <Icon name="success" size={16} /> Your payout account is ready. Vendors can pay;
-                    BidSpace routes your share automatically.
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-ink-muted dark:text-canvas-muted">
-                  Connect a payout account to receive booking payments. BidSpace uses Stripe
-                  destination charges: the vendor pays, the platform fee is withheld, the remainder
-                  lands in your account.
-                </p>
-                <form action={connectPayoutsAction}>
-                  <Button type="submit" variant="signal" size="md">
-                    <Icon name="payout" size={17} />
-                    Connect payouts with Stripe
-                  </Button>
-                </form>
-              </>
-            )}
+            <p className="rounded-[3px] border border-plan/30 bg-plan/[0.06] p-3 text-sm text-plan-deep dark:text-plan-bright">
+              BidSpace cannot collect money, onboard a payout account, or create a paid booking in
+              this phase. Adding provider secrets does not change this gate.
+            </p>
+            <DescriptionList
+              columns={1}
+              items={[
+                { term: "Current fee plan", detail: "Dormant / founder review" },
+                { term: "Expected payer", detail: "Host side" },
+                { term: "Possible models", detail: "Listing, placement, promotion, or subscription fees" },
+                { term: "Vendor checkout", detail: "Disabled" },
+                { term: "Payout onboarding", detail: "Disabled" },
+              ]}
+            />
           </PanelBody>
         </Panel>
 

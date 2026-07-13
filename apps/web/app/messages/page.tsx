@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 const CONTEXT_LABEL: Record<string, string> = {
   bid: "Bid conversation",
+  application: "Application conversation",
   booking: "Booking conversation",
   opportunity: "Opportunity conversation",
   support: "Support",
@@ -40,13 +41,13 @@ export default async function MessagesPage() {
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <Icon
-                    name={thread.context === "booking" ? "booking" : thread.context === "bid" ? "bid" : "opportunity"}
+                    name={thread.context === "booking" ? "booking" : thread.context === "bid" ? "bid" : thread.context === "application" ? "vendor" : "opportunity"}
                     size={18}
                     className="shrink-0 text-ink-muted dark:text-canvas-muted"
                   />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold">
-                      {thread.opportunity?.title ?? CONTEXT_LABEL[thread.context] ?? "Conversation"}
+                      {thread.opportunity?.title ?? thread.application?.opportunity?.title ?? CONTEXT_LABEL[thread.context] ?? "Conversation"}
                     </span>
                     <span className="block text-xs text-ink-muted dark:text-canvas-muted">
                       {CONTEXT_LABEL[thread.context]} · started {formatDateTime(thread.created_at)}

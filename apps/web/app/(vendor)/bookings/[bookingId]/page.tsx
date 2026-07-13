@@ -9,9 +9,7 @@ import {
   getBooking,
   getInventoryUnit,
   getOrCreateThread,
-  initiateBookingPayment,
   listReviewsForOrganization,
-  splitPayment,
   submitReview,
 } from "@bidspace/services";
 import type { OrganizationRow, PaymentRow, VenueRow } from "@bidspace/db";
@@ -33,7 +31,6 @@ import {
 import { requireVendorContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateRange, formatDateTime } from "@/lib/format";
-import { createBookingCheckoutSession, isStripeEnabled } from "@/lib/stripe";
 import { captureServerEvent } from "@/lib/analytics-server";
 
 export const metadata: Metadata = { title: "Booking" };
@@ -41,17 +38,14 @@ export const dynamic = "force-dynamic";
 
 export default async function VendorBookingDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ bookingId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireVendorContext();
   const db = tryGetDb();
   if (!db) return <EmptyState icon="warning" title="Marketplace data is not connected" />;
 
   const { bookingId } = await params;
-  const query = await searchParams;
 
   let booking;
   try {
@@ -81,57 +75,11 @@ export default async function VendorBookingDetailPage({
 
   const operational = ["confirmed", "upcoming", "in_progress"].includes(booking.status);
   const paymentPending = booking.status === "pending_payment";
-  const justPaid = query.paid === "1" && paymentPending;
-  const stripeReady = isStripeEnabled() && Boolean(hostOrg?.stripe_account_id);
 
   const myReviews = await listReviewsForOrganization(db, booking.host_organization_id);
   const alreadyReviewed = myReviews.some(
     (r) => r.booking_id === booking.id && r.reviewer_organization_id === context.activeDbOrganizationId,
   );
-
-  async function payNowAction() {
-    "use server";
-    const current = await requireVendorContext();
-    const serverDb = tryGetDb();
-    if (!serverDb || !isStripeEnabled()) return;
-    const currentBooking = await getBooking(serverDb, bookingId);
-    if (
-      currentBooking.bidder_organization_id !== current.activeDbOrganizationId ||
-      currentBooking.status !== "pending_payment"
-    ) {
-      return;
-    }
-    const host = (
-      await serverDb.from("organizations").select("stripe_account_id, name").eq("id", currentBooking.host_organization_id).maybeSingle()
-    ).data as Pick<OrganizationRow, "stripe_account_id" | "name"> | null;
-    if (!host?.stripe_account_id) return;
-
-    // Ensure a payment record exists before money moves.
-    const existing = (
-      await serverDb
-        .from("payments")
-        .select("id")
-        .eq("booking_id", currentBooking.id)
-        .eq("status", "pending")
-        .maybeSingle()
-    ).data;
-    if (!existing) {
-      await initiateBookingPayment(serverDb, { bookingId: currentBooking.id });
-    }
-
-    const split = splitPayment(currentBooking.price_cents);
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const session = await createBookingCheckoutSession({
-      bookingId: currentBooking.id,
-      amountCents: split.amountCents,
-      applicationFeeCents: split.platformFeeCents,
-      hostStripeAccountId: host.stripe_account_id,
-      productName: `BidSpace booking — ${host.name}`,
-      successUrl: `${siteUrl}/bookings/${currentBooking.id}?paid=1`,
-      cancelUrl: `${siteUrl}/bookings/${currentBooking.id}`,
-    });
-    if (session.url) redirect(session.url);
-  }
 
   async function messageHostAction() {
     "use server";
@@ -175,18 +123,6 @@ export default async function VendorBookingDetailPage({
         actions={<StatusBadge status={booking.status} className="!text-xs" />}
       />
 
-      {justPaid ? (
-        <div className="rounded-[4px] border border-moss/40 bg-moss/[0.06] p-4 text-sm">
-          <p className="flex items-center gap-2 font-semibold text-moss dark:text-moss-bright">
-            <Icon name="success" size={17} /> Payment received — confirming your booking.
-          </p>
-          <p className="mt-1 text-ink-muted dark:text-canvas-muted">
-            Stripe is finalizing the transfer. This page updates automatically once the webhook
-            lands (usually seconds).
-          </p>
-        </div>
-      ) : null}
-
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="grid content-start gap-6">
           <Panel>
@@ -225,8 +161,8 @@ export default async function VendorBookingDetailPage({
                 />
               ) : (
                 <p className="text-sm text-ink-muted dark:text-canvas-muted">
-                  Site access, load-in instructions, and host contacts unlock after payment
-                  confirms. Public pages never carry this information.
+                  Site access, load-in instructions, and host contacts remain hidden until the
+                  founder approves a live placement workflow. Public pages never carry this information.
                 </p>
               )}
             </PanelBody>
@@ -259,7 +195,7 @@ export default async function VendorBookingDetailPage({
         <aside className="grid content-start gap-4">
           {paymentPending ? (
             <Panel>
-              <PanelHeader title="Complete payment" kicker="Confirm your position" />
+              <PanelHeader title="Payment disabled" kicker="Founder preview" />
               <PanelBody className="grid gap-3">
                 {payment ? (
                   <DescriptionList
@@ -275,23 +211,12 @@ export default async function VendorBookingDetailPage({
                 ) : (
                   <p className="text-sm tabular-nums">Total: {formatMoney(booking.price_cents)}</p>
                 )}
-                {stripeReady ? (
-                  <form action={payNowAction}>
-                    <Button type="submit" variant="signal" size="lg" className="w-full">
-                      <Icon name="money" size={18} />
-                      Pay {formatMoney(booking.price_cents)} securely
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="rounded-[3px] border border-line bg-canvas p-3 text-sm text-ink-muted dark:bg-ink dark:text-canvas-muted">
-                    {isStripeEnabled()
-                      ? "The host has not finished connecting their payout account yet. You will be able to pay as soon as they do."
-                      : "Payments are not enabled in this environment (Stripe keys not configured)."}
-                  </div>
-                )}
+                <div className="rounded-[3px] border border-plan/30 bg-plan/[0.06] p-3 text-sm text-plan-deep dark:text-plan-bright">
+                  No checkout or payment commitment is available. This record is retained only as
+                  a test fixture for the future placement workflow.
+                </div>
                 <p className="text-xs text-ink-muted dark:text-canvas-muted">
-                  Paying through BidSpace records the accepted terms, holds the position, and
-                  covers you under the marketplace rules.
+                  Fee policy, legal terms, refunds, and payment operations require founder approval before launch.
                 </p>
               </PanelBody>
             </Panel>

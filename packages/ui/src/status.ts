@@ -5,7 +5,7 @@
 export type StatusTone = "positive" | "active" | "attention" | "negative" | "neutral";
 
 const TONE_BY_STATUS: Record<string, StatusTone> = {
-  // Live / open for business
+  // Available / open for submissions
   published: "active",
   receiving_bids: "active",
   available: "active",
@@ -23,9 +23,11 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   paid_out: "positive",
   reviewed: "positive",
   filled: "positive",
+  approved: "positive",
 
   // Needs someone's decision or money movement
   submitted: "attention",
+  under_review: "attention",
   viewed: "attention",
   shortlisted: "attention",
   countered: "attention",

@@ -84,8 +84,8 @@ export async function generateMetadata({
   };
 }
 
-function UnitCard({ unit }: { unit: InventoryUnitRow }) {
-  const openForBids = ["available", "receiving_bids"].includes(unit.status);
+function UnitCard({ unit, applicationMode }: { unit: InventoryUnitRow; applicationMode: boolean }) {
+  const openForSubmissions = ["available", "receiving_bids"].includes(unit.status);
   const specs = [
     unit.dimensions,
     unit.indoor === true ? "Indoor" : unit.indoor === false ? "Outdoor" : null,
@@ -112,7 +112,11 @@ function UnitCard({ unit }: { unit: InventoryUnitRow }) {
       </div>
       <div className="flex shrink-0 items-center gap-4">
         <p className="text-sm font-semibold tabular-nums">
-          {unit.minimum_bid_cents != null ? `From ${formatMoney(unit.minimum_bid_cents)}` : "Open terms"}
+          {applicationMode
+            ? "Host approval"
+            : unit.minimum_bid_cents != null
+              ? `From ${formatMoney(unit.minimum_bid_cents)}`
+              : "Open terms"}
           {unit.buy_now_price_cents != null ? (
             <span className="block text-xs font-normal text-ink-muted dark:text-canvas-muted">
               Buy now {formatMoney(unit.buy_now_price_cents)}
@@ -121,9 +125,9 @@ function UnitCard({ unit }: { unit: InventoryUnitRow }) {
         </p>
         <Link
           href={`/units/${unit.id}`}
-          className={buttonClasses(openForBids ? "signal" : "secondary", "sm")}
+          className={buttonClasses(openForSubmissions ? "signal" : "secondary", "sm")}
         >
-          {openForBids ? "View & bid" : "View"}
+          {openForSubmissions ? `View & ${applicationMode ? "apply" : "bid"}` : "View"}
         </Link>
       </div>
     </div>
@@ -152,6 +156,12 @@ export default async function OpportunityDetailPage({
   const start = opportunity.starts_at ?? opportunity.event?.starts_at ?? null;
   const end = opportunity.ends_at ?? opportunity.event?.ends_at ?? null;
   const deadline = describeDeadline(opportunity.bid_deadline);
+  const requirements = opportunity.requirements as {
+    insuranceRequired?: boolean;
+    permitRequired?: boolean;
+    rules?: string | null;
+    vendorRequirements?: string | null;
+  };
   const heroImage = opportunity.image_urls?.[0] ?? opportunity.venue?.image_urls?.[0] ?? null;
 
   // Vendor-side context: saved state + explainable fit.
@@ -303,7 +313,13 @@ export default async function OpportunityDetailPage({
             </h2>
             <div className="mt-4 grid gap-3">
               {units.length > 0 ? (
-                units.map((unit) => <UnitCard key={unit.id} unit={unit} />)
+                units.map((unit) => (
+                  <UnitCard
+                    key={unit.id}
+                    unit={unit}
+                    applicationMode={opportunity.allocation_mode !== "bid"}
+                  />
+                ))
               ) : (
                 <EmptyState
                   icon="unit"
@@ -320,6 +336,10 @@ export default async function OpportunityDetailPage({
             <DescriptionList
               className="mt-4"
               items={[
+                {
+                  term: "Placement method",
+                  detail: opportunity.allocation_mode.replace(/_/g, " "),
+                },
                 {
                   term: "Commercial terms",
                   detail: PRICING_EXPLANATION[opportunity.pricing_mode],
@@ -338,6 +358,22 @@ export default async function OpportunityDetailPage({
                 },
               ]}
             />
+            <div className="mt-5 grid gap-3 rounded-[4px] border border-line bg-surface p-5 text-sm dark:bg-surface-dark">
+              <p className="kicker">Verification checklist</p>
+              <p className="flex items-center gap-2">
+                <Icon name={requirements.insuranceRequired ? "document" : "check"} size={16} />
+                Insurance: {requirements.insuranceRequired ? "required and reviewed before placement" : "not required by this host"}
+              </p>
+              <p className="flex items-center gap-2">
+                <Icon name={requirements.permitRequired ? "document" : "check"} size={16} />
+                Permit or license: {requirements.permitRequired ? "required and reviewed before placement" : "not required by this host"}
+              </p>
+              {requirements.vendorRequirements ? <p><strong>Vendor requirements:</strong> {requirements.vendorRequirements}</p> : null}
+              {requirements.rules ? <p><strong>Rules:</strong> {requirements.rules}</p> : null}
+              <p className="text-xs text-ink-muted dark:text-canvas-muted">
+                Badges show the evidence reviewed; they are not legal approval or a launch guarantee.
+              </p>
+            </div>
           </section>
         </div>
 
@@ -348,7 +384,9 @@ export default async function OpportunityDetailPage({
               <div>
                 <p className="kicker mb-1">Commercial terms</p>
                 <p className="font-display text-2xl font-semibold tabular-nums">
-                  {opportunity.minimum_bid_cents != null
+                  {opportunity.allocation_mode !== "bid"
+                    ? "Application"
+                    : opportunity.minimum_bid_cents != null
                     ? `From ${formatMoney(opportunity.minimum_bid_cents)}`
                     : "Open terms"}
                 </p>
@@ -362,7 +400,9 @@ export default async function OpportunityDetailPage({
               {units.length > 0 ? (
                 <Link href={`/units/${units[0]!.id}`} className={buttonClasses("signal", "lg", "w-full")}>
                   <Icon name="bid" size={19} />
-                  {units.length === 1 ? "View position & bid" : "Choose a position"}
+                  {units.length === 1
+                    ? `View space & ${opportunity.allocation_mode === "bid" ? "bid" : "apply"}`
+                    : "Choose a space"}
                 </Link>
               ) : null}
 

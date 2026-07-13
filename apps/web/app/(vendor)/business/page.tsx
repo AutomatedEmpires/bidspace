@@ -85,6 +85,23 @@ export default async function BusinessProfilePage() {
       .map((u) => u.trim())
       .filter(Boolean);
     const radiusRaw = String(formData.get("serviceRadiusMiles") ?? "").trim();
+    const profileDetails = {
+      setupType: String(formData.get("setupType") ?? "").trim() || undefined,
+      spaceNeeds: String(formData.get("spaceNeeds") ?? "").trim() || undefined,
+      powerNeeds: String(formData.get("powerNeeds") ?? "").trim() || undefined,
+      waterNeeds: String(formData.get("waterNeeds") ?? "").trim() || undefined,
+      serviceArea: String(formData.get("serviceArea") ?? "").trim() || undefined,
+      availability: String(formData.get("availability") ?? "").trim() || undefined,
+      priorEvents: String(formData.get("priorEvents") ?? "")
+        .split(/\r?\n/)
+        .map((value) => value.trim())
+        .filter(Boolean),
+      socialLinks: String(formData.get("socialLinks") ?? "")
+        .split(/\s+/)
+        .map((value) => value.trim())
+        .filter(Boolean),
+      pitchToHosts: String(formData.get("pitchToHosts") ?? "").trim() || undefined,
+    };
 
     const parsed = roleProfileUpdateSchema.safeParse({
       displayName: String(formData.get("displayName") ?? "").trim() || undefined,
@@ -92,6 +109,7 @@ export default async function BusinessProfilePage() {
       categoryTags: tags,
       galleryUrls: gallery,
       serviceRadiusMiles: radiusRaw ? Number(radiusRaw) : undefined,
+      profileDetails,
     });
     if (!parsed.success) return;
 
@@ -101,6 +119,7 @@ export default async function BusinessProfilePage() {
     patch.category_tags = parsed.data.categoryTags ?? [];
     patch.gallery_urls = parsed.data.galleryUrls ?? [];
     if (parsed.data.serviceRadiusMiles !== undefined) patch.service_radius_miles = parsed.data.serviceRadiusMiles;
+    patch.profile_details = parsed.data.profileDetails ?? {};
 
     if (profile) {
       await serverDb.from("role_profiles").update(patch).eq("id", profile.id);
@@ -179,6 +198,37 @@ export default async function BusinessProfilePage() {
                 >
                   <Textarea id="bio" name="bio" rows={4} defaultValue={profile?.bio ?? ""} />
                 </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Setup type" htmlFor="setupType" hint="Booth, food truck, trailer, table, mobile service…">
+                    <Input id="setupType" name="setupType" defaultValue={profile?.profile_details?.setupType ?? ""} />
+                  </Field>
+                  <Field label="Space needs" htmlFor="spaceNeeds" hint="Footprint, access, clearance, indoor/outdoor needs.">
+                    <Input id="spaceNeeds" name="spaceNeeds" defaultValue={profile?.profile_details?.spaceNeeds ?? ""} />
+                  </Field>
+                  <Field label="Power requirements" htmlFor="powerNeeds">
+                    <Input id="powerNeeds" name="powerNeeds" defaultValue={profile?.profile_details?.powerNeeds ?? ""} placeholder="One 20A outlet" />
+                  </Field>
+                  <Field label="Water requirements" htmlFor="waterNeeds">
+                    <Input id="waterNeeds" name="waterNeeds" defaultValue={profile?.profile_details?.waterNeeds ?? ""} placeholder="No water needed" />
+                  </Field>
+                  <Field label="Service area" htmlFor="serviceArea">
+                    <Input id="serviceArea" name="serviceArea" defaultValue={profile?.profile_details?.serviceArea ?? ""} placeholder="Spokane + Inland Northwest" />
+                  </Field>
+                  <Field label="Availability" htmlFor="availability">
+                    <Input id="availability" name="availability" defaultValue={profile?.profile_details?.availability ?? ""} placeholder="Weekends, May–October" />
+                  </Field>
+                </div>
+                <Field label="Pitch to hosts" htmlFor="pitchToHosts" hint="A reusable introduction hosts see before they review a submission.">
+                  <Textarea id="pitchToHosts" name="pitchToHosts" rows={3} defaultValue={profile?.profile_details?.pitchToHosts ?? ""} />
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Prior events" htmlFor="priorEvents" hint="One event or placement per line.">
+                    <Textarea id="priorEvents" name="priorEvents" rows={3} defaultValue={(profile?.profile_details?.priorEvents ?? []).join("\n")} />
+                  </Field>
+                  <Field label="Social links" htmlFor="socialLinks" hint="One full URL per line.">
+                    <Textarea id="socialLinks" name="socialLinks" rows={3} defaultValue={(profile?.profile_details?.socialLinks ?? []).join("\n")} />
+                  </Field>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Categories"
