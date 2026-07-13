@@ -106,7 +106,7 @@ Never print, commit, paste into PRs, or expose secrets/private provider URLs. Ke
 
 Integer-cents money, sealed bids, curated selection, payment-before-confirmed-booking, and destination-charge architecture are current implementation decisions. They are safe to exercise only in Stripe test mode until the legal/entity and payout model is approved. Test-mode success does not authorize live Connect, a real charge, a payout, a refund, or claims that BidSpace handles production payments.
 
-Legal/entity/operator/tax/payment decision research and draft documents are allowed. Legal filings, live money, and public legal/compliance claims remain hard stops or require approved source evidence.
+Legal/entity/operator/tax/payment research, branch drafts, and tests are allowed. Legal filings and live money are hard stops. Public legal/compliance claims require authoritative evidence and applicable review; that evidence requirement does not block private drafting or preview validation.
 
 ### Email and auth
 
@@ -157,7 +157,7 @@ A change is done only when it:
 
 Refreshed 2026-07-13 UTC: draft PR **#65**, `docs: add agent operating standards`, is the only open PR and owns `AGENTS.md` on `agent/docs-operating-standards`. It was mergeable with green checks before this contract revision; refresh after any push.
 
-Current blockers are zero real users/customers, unproven host supply and vendor demand, no validated marketplace liquidity, the final domain/public-launch decision, and external proof of the complete host/vendor journey. Stripe Connect live use remains blocked on the dedicated legal entity/account and approved operator, tax, KYC, payout, refund, dispute, reserve, and support model. D029 also requires a dedicated BidSpace Stripe account plus migration away from currently shared Sentry and Mapbox resources and proof of a dedicated PostHog path. Assigned agents may prepare code/runbooks and create free non-production dedicated resources when ownership and rollback are clear; paid plans, ownership transfer, unavailable MFA, or live activation remain hard stops. Provider/dev artifacts and internal database loops do not clear those blockers. Refresh GitHub, dated decisions, and provider-safe evidence before relying on this list.
+Current blockers are zero real users/customers, unproven host supply and vendor demand, no validated marketplace liquidity, the final domain/public-launch decision, and external proof of the complete host/vendor journey. Stripe Connect live use remains blocked on the dedicated legal entity/account and approved operator, tax, KYC, payout, refund, dispute, reserve, and support model. D029 also requires a dedicated BidSpace Stripe account plus migration away from currently shared Sentry and Mapbox resources and proof of a dedicated PostHog path. Assigned agents may prepare code/runbooks and create free non-production dedicated resources when ownership and rollback are clear. Reversible provider activation may proceed in an assigned lane; stop when it crosses a §5 hard stop such as a paid plan, live-money activation/real charge, ownership transfer, or unavailable MFA. Provider/dev artifacts and internal database loops do not clear those blockers. Refresh GitHub, dated decisions, and provider-safe evidence before relying on this list.
 
 ## 13. Future-agent output format
 
