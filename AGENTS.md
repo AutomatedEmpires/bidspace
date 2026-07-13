@@ -8,7 +8,7 @@ This contract binds human and automated contributors. Read it before changing th
 
 The primary operating customer and buyer is the host, venue operator, market organizer, or space owner who controls inventory and needs to publish and allocate it. The primary demand user is the vendor/business seeking a place to operate. Hosts own and publish supply; vendors are not inventory sources.
 
-The product destination is a map-first, mobile-first operating marketplace for temporary commercial space and vendor placement: hosts define durable venues, zones, and **Inventory Units**, release them as opportunities, choose among qualified vendors, and manage the resulting operating record. Vendors discover space through map/list parity, understand fit and terms, submit an application/offer or sealed bid, and build a reusable reputation.
+The product destination is a map-first, mobile-first operating marketplace for temporary commercial space and vendor placement: hosts define durable venues, zones, and **Inventory Units**, release them as opportunities, choose among qualified vendors, and manage the resulting operating record. Vendors discover space through map/list parity, understand fit and terms, submit a sealed offer/bid, and build a reusable reputation. **Bid is the canonical allocation object; the retired Application object must not be recreated.**
 
 ## 2. Evidence-based product direction
 
@@ -31,7 +31,7 @@ Do not preserve weak flows for nonexistent customers. Agents may change copy, UX
 
 ## 4. Execution doctrine and authority
 
-Ship meaningful, tested improvements instead of producing another broad audit or activation checklist. Inspect enough to choose a coherent slice, implement it through the real host/vendor path, and leave reviewable evidence. Prefer one working host-create → vendor-discover step over many empty dashboard cards.
+Agents are expected to ship meaningful, tested improvements, not produce endless audits or activation checklists. Inspect enough to choose a coherent slice, implement it through the real host/vendor path, and leave reviewable evidence on a reversible branch. Prefer one working host-create → vendor-discover step over many empty dashboard cards.
 
 Without additional founder approval, an agent may perform reversible, non-destructive work inside an assigned lane, including:
 
@@ -90,7 +90,7 @@ Work in roughly this order unless a current issue or incident supplies better ev
 
 ### Providers and deployment
 
-The intended spine is Doppler, Vercel, Supabase Postgres/PostGIS, Clerk, Stripe Connect, Mapbox, Cloudinary, PostHog, Sentry, and Resend/email. Provider changes require a dated technical/product reason; do not create duplicate stacks casually.
+The intended spine is Doppler, Vercel, Supabase Postgres/PostGIS, Clerk, Stripe Connect, Mapbox, Cloudinary, PostHog, Sentry, and Resend/email. Locked decision D029 requires **venture-dedicated accounts/resources for every external provider**. Never reuse another venture's credentials, account, capacity, telemetry, sender reputation, fixtures, or customer objects. Within BidSpace, avoid parallel replacements for the same capability unless a dated migration decision explains ownership and removal.
 
 Never print, commit, paste into PRs, or expose secrets/private provider URLs. Keep service-role and Stripe secrets server-only. Protected previews must use isolated data and non-production provider modes. A provider label, internal test, seeded state, or preview is proof only of the tested behavior—not public readiness.
 
@@ -157,7 +157,7 @@ A change is done only when it:
 
 Refreshed 2026-07-13 UTC: draft PR **#65**, `docs: add agent operating standards`, is the only open PR and owns `AGENTS.md` on `agent/docs-operating-standards`. It was mergeable with green checks before this contract revision; refresh after any push.
 
-Current blockers are zero real users/customers, unproven host supply and vendor demand, no validated marketplace liquidity, the final domain/public-launch decision, and external proof of the complete host/vendor journey. Stripe Connect live use remains blocked on the dedicated legal entity/account and approved operator, tax, KYC, payout, refund, dispute, reserve, and support model. Provider/dev artifacts and internal database loops do not clear those blockers. Refresh GitHub, dated decisions, and provider-safe evidence before relying on this list.
+Current blockers are zero real users/customers, unproven host supply and vendor demand, no validated marketplace liquidity, the final domain/public-launch decision, and external proof of the complete host/vendor journey. Stripe Connect live use remains blocked on the dedicated legal entity/account and approved operator, tax, KYC, payout, refund, dispute, reserve, and support model. D029 also requires a dedicated BidSpace Stripe account plus migration away from currently shared Sentry and Mapbox resources and proof of a dedicated PostHog path. Assigned agents may prepare code/runbooks and create free non-production dedicated resources when ownership and rollback are clear; paid plans, ownership transfer, unavailable MFA, or live activation remain hard stops. Provider/dev artifacts and internal database loops do not clear those blockers. Refresh GitHub, dated decisions, and provider-safe evidence before relying on this list.
 
 ## 13. Future-agent output format
 
