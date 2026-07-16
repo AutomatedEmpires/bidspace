@@ -7,7 +7,7 @@ import {
   listVenuesForOrg,
   updateOpportunity,
 } from "@bidspace/services";
-import { COMMERCE_LAYER, PRICING_MODE, toCents } from "@bidspace/core";
+import { ALLOCATION_MODE, COMMERCE_LAYER, PRICING_MODE, toCents } from "@bidspace/core";
 import {
   Button,
   EmptyState,
@@ -31,6 +31,15 @@ const PRICING_HELP: Record<string, string> = {
   minimum_bid: "Offers start at your floor; you select the winner.",
   competitive_bid: "Sealed competitive offers; you select on fit and value.",
   hybrid: "Bids from a floor, with optional buy-now on individual positions.",
+};
+
+const ALLOCATION_LABEL: Record<string, string> = {
+  bid: "Sealed bid",
+  application: "Application",
+  invite_only: "Invite only",
+  fixed_fee: "Fixed fee + host approval",
+  host_approval: "Host approval",
+  waitlist: "Waitlist intake",
 };
 
 export default async function NewOpportunityPage({
@@ -70,6 +79,7 @@ export default async function NewOpportunityPage({
         commerceLayer: (value("commerceLayer") || undefined) as (typeof COMMERCE_LAYER)[number] | undefined,
         minimumBidCents: minimumBid ? toCents(Number(minimumBid)) : undefined,
         bidDeadline: value("bidDeadline") ? new Date(value("bidDeadline")).toISOString() : undefined,
+        allocationMode: (value("allocationMode") || "bid") as (typeof ALLOCATION_MODE)[number],
       });
       opportunityId = created.id;
 
@@ -86,6 +96,13 @@ export default async function NewOpportunityPage({
         startsAt: value("startsAt") ? new Date(value("startsAt")).toISOString() : undefined,
         endsAt: value("endsAt") ? new Date(value("endsAt")).toISOString() : undefined,
         visibility: (value("visibility") || "public") as "public" | "network" | "invite_only",
+        allocationMode: (value("allocationMode") || "bid") as (typeof ALLOCATION_MODE)[number],
+        requirements: {
+          insuranceRequired: formData.get("insuranceRequired") === "on",
+          permitRequired: formData.get("permitRequired") === "on",
+          rules: value("rules") || null,
+          vendorRequirements: value("vendorRequirements") || null,
+        },
       });
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -99,13 +116,13 @@ export default async function NewOpportunityPage({
   return (
     <div className="grid gap-8">
       <PageHeader
-        kicker="Opportunity builder"
-        title="Release inventory"
-        lede="Save as a draft first — you attach positions and preview before anything goes live."
+        kicker="Space listing"
+        title="Create a temporary vendor-space listing"
+        lede="Describe the place, dates, audience, requirements, and placement method. Every listing stays a non-binding draft until you release it."
       />
 
       <Panel className="max-w-4xl">
-        <PanelHeader title="1 · The release" kicker="Draft — nothing is public yet" />
+        <PanelHeader title="1 · The space release" kicker="Draft — nothing is public yet" />
         <PanelBody>
           {errorMessage ? (
             <p role="alert" className="mb-4 rounded-[3px] border border-alert/40 bg-alert/[0.06] px-3 py-2 text-sm font-medium text-alert">
@@ -153,8 +170,17 @@ export default async function NewOpportunityPage({
               </Field>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Allocation" htmlFor="pricingMode" hint={PRICING_HELP.hybrid}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Placement method" htmlFor="allocationMode">
+                <Select id="allocationMode" name="allocationMode" defaultValue="bid">
+                  {ALLOCATION_MODE.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {ALLOCATION_LABEL[mode]}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Price structure" htmlFor="pricingMode" hint={PRICING_HELP.hybrid}>
                 <Select id="pricingMode" name="pricingMode" defaultValue="hybrid">
                   {PRICING_MODE.map((mode) => (
                     <option key={mode} value={mode}>
@@ -169,6 +195,29 @@ export default async function NewOpportunityPage({
               <Field label="Submission deadline" htmlFor="bidDeadline">
                 <Input id="bidDeadline" name="bidDeadline" type="datetime-local" />
               </Field>
+            </div>
+
+            <div className="grid gap-4 rounded-[4px] border border-line bg-canvas p-4 dark:bg-ink sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <p className="font-display font-semibold">Requirements &amp; verification</p>
+                <p className="mt-1 text-sm text-ink-muted dark:text-canvas-muted">
+                  Be explicit before vendors bid or apply. Verification is evidence-based and never implied.
+                </p>
+              </div>
+              <Field label="Rules" htmlFor="rules" hint="Access, prohibited items, conduct, cancellation, and day-of rules.">
+                <Textarea id="rules" name="rules" rows={3} />
+              </Field>
+              <Field label="Vendor requirements" htmlFor="vendorRequirements" hint="Setup, staffing, signage, category, and operational expectations.">
+                <Textarea id="vendorRequirements" name="vendorRequirements" rows={3} />
+              </Field>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="insuranceRequired" className="size-4 accent-signal" />
+                Current insurance required
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="permitRequired" className="size-4 accent-signal" />
+                Permit or license required
+              </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -204,7 +253,7 @@ export default async function NewOpportunityPage({
             </div>
 
             <Button type="submit" variant="signal" size="lg" className="justify-self-start">
-              Save draft & add positions
+              Save draft & add spaces
             </Button>
           </form>
         </PanelBody>

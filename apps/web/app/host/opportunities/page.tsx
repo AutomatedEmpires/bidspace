@@ -26,13 +26,13 @@ export default async function HostOpportunitiesPage() {
   return (
     <div className="grid gap-8">
       <PageHeader
-        kicker="Opportunities"
-        title="Your releases"
-        lede="Each opportunity is a time-bound release of your inventory: draft it, attach positions, publish, review bids, book."
+        kicker="Spaces"
+        title="Your temporary vendor-space releases"
+        lede="Reuse a venue, booth, pad, stall, kiosk, or placement across dates. Draft the release, add spaces, set requirements, invite vendors, and review bids or applications."
         actions={
           <Link href="/host/opportunities/new" className={buttonClasses("signal", "md")}>
             <Icon name="add" size={17} />
-            New opportunity
+            New space listing
           </Link>
         }
       />
@@ -41,8 +41,9 @@ export default async function HostOpportunitiesPage() {
         <Table>
           <THead>
             <tr>
-              <TH>Opportunity</TH>
+              <TH>Space listing</TH>
               <TH>Visibility</TH>
+              <TH>Placement method</TH>
               <TH className="text-right">Floor</TH>
               <TH>Deadline</TH>
               <TH>Status</TH>
@@ -56,8 +57,13 @@ export default async function HostOpportunitiesPage() {
                 <TD className="text-ink-muted dark:text-canvas-muted">
                   {VISIBILITY_LABEL[o.visibility] ?? o.visibility}
                 </TD>
+                <TD className="capitalize text-ink-muted dark:text-canvas-muted">
+                  {o.allocation_mode.replace(/_/g, " ")}
+                </TD>
                 <TD className="text-right tabular-nums">
-                  {o.minimum_bid_cents != null ? formatMoney(o.minimum_bid_cents) : "—"}
+                  {o.allocation_mode === "bid" && o.minimum_bid_cents != null
+                    ? formatMoney(o.minimum_bid_cents)
+                    : "—"}
                 </TD>
                 <TD className="text-sm">{describeDeadline(o.bid_deadline) ?? "—"}</TD>
                 <TD>
@@ -75,11 +81,11 @@ export default async function HostOpportunitiesPage() {
       ) : (
         <EmptyState
           icon="opportunity"
-          title="No opportunities yet"
-          body="Your first release is the activation moment: pick a location, define a position, set the terms, publish."
+          title="No space listings yet"
+          body="Start with the venue or event you control, then define the booth, pad, stall, kiosk, or placement vendors can pursue."
           actions={
             <Link href="/host/opportunities/new" className={buttonClasses("signal", "sm")}>
-              Create your first opportunity
+              Create your first space listing
             </Link>
           }
         />

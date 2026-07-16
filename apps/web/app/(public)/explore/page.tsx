@@ -7,7 +7,7 @@ import { OpportunityCard } from "@/components/opportunity-card";
 import { tryGetDb } from "@/lib/safe-db";
 
 export const metadata: Metadata = {
-  title: "Explore opportunities",
+  title: "Explore vendor spaces",
   description:
     "Browse open vendor spaces, food-truck pads, kiosks, sponsor placements, and temporary commercial opportunities.",
 };
@@ -58,7 +58,7 @@ export default async function ExplorePage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="kicker mb-2">Discovery</p>
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Open opportunities</h1>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Temporary vendor spaces</h1>
         </div>
         <Link href="/map" className={buttonClasses("secondary", "md")}>
           <Icon name="map" size={18} />
@@ -122,12 +122,12 @@ export default async function ExplorePage({
         ) : (
           <EmptyState
             icon="opportunity"
-            title="The first public opportunities are being prepared"
-            body="Hosts are setting up their locations and inventory. If you control commercial space, this is the moment to be early."
+            title="The first public spaces are being prepared"
+            body="Hosts are setting up venues, dates, requirements, and placement methods. If you control temporary vendor space, this is the moment to be early."
             actions={
               <>
                 <Link href="/for-hosts" className={buttonClasses("signal", "sm")}>
-                  List commercial space
+                  Create a space listing
                 </Link>
                 <Link href="/how-it-works" className={buttonClasses("secondary", "sm")}>
                   How BidSpace works

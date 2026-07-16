@@ -5,7 +5,7 @@ import { Icon, buttonClasses } from "@bidspace/ui";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Vendors discover and bid free. Hosts pay a platform fee on completed bookings, with subscriptions for recurring operations coming next.",
+    "BidSpace fees are not active. Future host-side listing, placement, promotion, or subscription plans remain under founder review.",
 };
 
 export default function PricingPage() {
@@ -13,20 +13,20 @@ export default function PricingPage() {
     <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
       <p className="kicker mb-3">Pricing</p>
       <h1 className="max-w-2xl font-display text-4xl font-semibold leading-[1.1]">
-        We earn when your space earns.
+        Fees are not active.
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-ink-muted dark:text-canvas-muted">
-        No listing fees, no charge to browse or bid. BidSpace takes a platform fee when a booking
-        completes through the marketplace — aligned with hosts filling space and vendors booking it.
+        BidSpace is in founder preview. No vendor payment, host payout, listing fee, placement fee,
+        promotion fee, or subscription is active. The commercial model will be approved before launch.
       </p>
 
       <div className="mt-12 grid gap-5 lg:grid-cols-3">
         {/* Vendors */}
         <div className="rounded-[4px] border border-line bg-surface p-7 dark:bg-surface-dark">
           <p className="kicker">Vendors</p>
-          <p className="mt-3 font-display text-4xl font-semibold">Free</p>
+          <p className="mt-3 font-display text-4xl font-semibold">Preview</p>
           <p className="mt-2 text-sm text-ink-muted dark:text-canvas-muted">
-            Core discovery is never paywalled.
+            No vendor charges are active.
           </p>
           <ul className="mt-6 grid gap-2.5 text-sm">
             {[
@@ -34,7 +34,7 @@ export default function PricingPage() {
               "Business profile & portfolio",
               "Explainable fit on every listing",
               "Sealed bids and applications",
-              "Bookings, messaging, reviews",
+              "Applications, bids, messaging",
             ].map((line) => (
               <li key={line} className="flex items-start gap-2">
                 <Icon name="check" size={15} className="mt-0.5 shrink-0 text-moss dark:text-moss-bright" />
@@ -54,19 +54,19 @@ export default function PricingPage() {
           </span>
           <p className="kicker">Hosts</p>
           <p className="mt-3 font-display text-4xl font-semibold">
-            10%<span className="text-lg font-normal text-ink-muted dark:text-canvas-muted"> per completed booking</span>
+            TBD<span className="text-lg font-normal text-ink-muted dark:text-canvas-muted"> after founder review</span>
           </p>
           <p className="mt-2 text-sm text-ink-muted dark:text-canvas-muted">
-            Withheld automatically from the payout — you never invoice us.
+            Future revenue is expected to come from hosts, not live vendor checkout.
           </p>
           <ul className="mt-6 grid gap-2.5 text-sm">
             {[
-              "Unlimited locations & inventory units",
+              "Locations, events, and reusable spaces",
               "All allocation modes, incl. sealed bidding",
               "Private vendor network & invitations",
-              "Stripe payments with automatic payouts",
-              "Recorded terms on every booking",
-              "Command center, calendar, bid review",
+              "Verification and requirement matching",
+              "Recorded placement-review decisions",
+              "Command center, calendar, submission review",
             ].map((line) => (
               <li key={line} className="flex items-start gap-2">
                 <Icon name="check" size={15} className="mt-0.5 shrink-0 text-moss dark:text-moss-bright" />
@@ -81,18 +81,18 @@ export default function PricingPage() {
 
         {/* Enterprise */}
         <div className="rounded-[4px] border border-line bg-surface p-7 dark:bg-surface-dark">
-          <p className="kicker">Enterprise</p>
-          <p className="mt-3 font-display text-4xl font-semibold">Let&apos;s talk</p>
+          <p className="kicker">Future host plans</p>
+          <p className="mt-3 font-display text-4xl font-semibold">Dormant</p>
           <p className="mt-2 text-sm text-ink-muted dark:text-canvas-muted">
-            Municipalities, venue portfolios, large operators.
+            Commercial terms remain a founder decision.
           </p>
           <ul className="mt-6 grid gap-2.5 text-sm">
             {[
-              "Multi-venue and multi-event operations",
-              "Team roles & approval workflows",
-              "Negotiated marketplace terms",
-              "Priority verification & support",
-              "Integrations & reporting",
+              "Possible listing fees",
+              "Possible placement fees",
+              "Possible promoted listings",
+              "Possible host subscriptions",
+              "No money movement before approval",
             ].map((line) => (
               <li key={line} className="flex items-start gap-2">
                 <Icon name="check" size={15} className="mt-0.5 shrink-0 text-moss dark:text-moss-bright" />
@@ -101,14 +101,14 @@ export default function PricingPage() {
             ))}
           </ul>
           <a href="mailto:hosts@bidspace.app" className={buttonClasses("secondary", "md", "mt-7 w-full")}>
-            Contact us
+            Share host feedback
           </a>
         </div>
       </div>
 
       <p className="mt-10 max-w-2xl text-sm text-ink-muted dark:text-canvas-muted">
-        Promoted placement, when offered, is always labeled as such. Money never buys verification,
-        moderation outcomes, or trust standing on BidSpace.
+        Any future promoted placement must be labeled. Payment can never buy verification,
+        moderation outcomes, or trust standing. Final fees, refunds, and legal terms remain undecided.
       </p>
     </div>
   );

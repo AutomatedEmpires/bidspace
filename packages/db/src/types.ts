@@ -30,7 +30,9 @@ import type {
   AdminActionType,
   NetworkMemberStatus,
   InvitationStatus,
+  ApplicationStatus,
 } from "@bidspace/core";
+import type { AllocationMode, VendorProfileDetails } from "@bidspace/core";
 
 // Hand-authored row contracts mirroring packages/db/migrations/*.sql.
 // These are superseded by `pnpm --filter @bidspace/db gen:types` once a live
@@ -93,6 +95,7 @@ export interface RoleProfileRow {
   public_contact_enabled: boolean;
   status: RoleProfileStatus;
   verification_status: VerificationStatus;
+  profile_details: VendorProfileDetails;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
@@ -187,6 +190,7 @@ export interface OpportunityRow {
   description: string | null;
   status: OpportunityStatus;
   visibility: OpportunityVisibility;
+  allocation_mode: AllocationMode;
   pricing_mode: PricingMode;
   commerce_layer: CommerceLayer | null;
   starts_at: string | null;
@@ -310,6 +314,7 @@ export interface MessageThreadRow {
   id: string;
   context: MessageThreadContext;
   bid_id: string | null;
+  application_id: string | null;
   booking_id: string | null;
   opportunity_id: string | null;
   created_at: string;
@@ -414,6 +419,25 @@ export interface OpportunityInvitationRow {
   updated_at: string;
 }
 
+export interface ApplicationRow {
+  id: string;
+  vendor_organization_id: string;
+  host_organization_id: string;
+  opportunity_id: string;
+  inventory_unit_id: string | null;
+  pitch: string;
+  setup_description: string | null;
+  space_needs: string | null;
+  category: string | null;
+  power_needs: boolean | null;
+  water_needs: boolean | null;
+  attachments: unknown[];
+  status: ApplicationStatus;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StripeWebhookEventRow {
   id: string;
   event_type: string;
@@ -442,5 +466,6 @@ export interface BidspaceTables {
   vendor_network_members: VendorNetworkMemberRow;
   saved_opportunities: SavedOpportunityRow;
   opportunity_invitations: OpportunityInvitationRow;
+  applications: ApplicationRow;
   stripe_webhook_events: StripeWebhookEventRow;
 }

@@ -104,7 +104,7 @@ export default async function HostProfilePage({
         <div className="grid content-start gap-10">
           <section>
             <h2 className="font-display text-xl font-semibold">
-              Open opportunities ({opportunities.length})
+              Spaces accepting submissions ({opportunities.length})
             </h2>
             {opportunities.length > 0 ? (
               <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -116,15 +116,15 @@ export default async function HostProfilePage({
               <EmptyState
                 className="mt-4"
                 icon="opportunity"
-                title="Nothing open right now"
-                body="This host releases inventory around their event calendar. Check back, or sign in and save the host's next release."
+                title="No spaces accepting submissions right now"
+                body="This host releases booths, pads, stalls, kiosks, and placements around their event calendar. Check back for the next date."
               />
             )}
           </section>
 
           {hostVenues.length > 0 ? (
             <section>
-              <h2 className="font-display text-xl font-semibold">Locations</h2>
+              <h2 className="font-display text-xl font-semibold">Venues, events &amp; properties</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {hostVenues.map((venue) => (
                   <Panel key={venue.id}>
@@ -170,6 +170,9 @@ export default async function HostProfilePage({
                   </li>
                 ))}
               </ul>
+              <p className="mt-4 text-xs text-ink-muted dark:text-canvas-muted">
+                Trust signals show reviewed evidence and marketplace history; they are not legal approval or a launch guarantee.
+              </p>
             </PanelBody>
           </Panel>
 

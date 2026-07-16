@@ -8,6 +8,7 @@ import {
   VENUE_TYPE,
   EVENT_TYPE,
 } from "./enums";
+import { ALLOCATION_MODE } from "./marketplace";
 
 const slug = z
   .string()
@@ -78,6 +79,7 @@ export const opportunityCreateSchema = z.object({
   commerceLayer: z.enum(COMMERCE_LAYER).optional(),
   minimumBidCents: z.number().int().nonnegative().optional(),
   bidDeadline: z.string().datetime().optional(),
+  allocationMode: z.enum(ALLOCATION_MODE).default("bid"),
 });
 export type OpportunityCreate = z.infer<typeof opportunityCreateSchema>;
 
@@ -132,6 +134,8 @@ export const opportunityUpdateSchema = z.object({
   minimumBidCents: z.number().int().nonnegative().nullable().optional(),
   bidDeadline: z.string().datetime().nullable().optional(),
   imageUrls: z.array(z.string().url()).max(12).optional(),
+  allocationMode: z.enum(ALLOCATION_MODE).optional(),
+  requirements: z.record(z.string(), z.unknown()).optional(),
 });
 export type OpportunityUpdate = z.infer<typeof opportunityUpdateSchema>;
 
@@ -175,8 +179,35 @@ export const roleProfileUpdateSchema = z.object({
   galleryUrls: z.array(z.string().url()).max(24).optional(),
   serviceRadiusMiles: z.number().int().positive().max(5000).optional(),
   commerceLayers: z.array(z.enum(COMMERCE_LAYER)).optional(),
+  profileDetails: z
+    .object({
+      setupType: z.string().max(300).optional(),
+      spaceNeeds: z.string().max(1000).optional(),
+      powerNeeds: z.string().max(500).optional(),
+      waterNeeds: z.string().max(500).optional(),
+      serviceArea: z.string().max(500).optional(),
+      availability: z.string().max(1000).optional(),
+      priorEvents: z.array(z.string().min(1).max(200)).max(20).optional(),
+      socialLinks: z.array(z.string().url()).max(10).optional(),
+      pitchToHosts: z.string().max(2000).optional(),
+    })
+    .optional(),
 });
 export type RoleProfileUpdate = z.infer<typeof roleProfileUpdateSchema>;
+
+export const applicationCreateSchema = z.object({
+  vendorOrganizationId: z.string().uuid(),
+  opportunityId: z.string().uuid(),
+  inventoryUnitId: z.string().uuid().optional(),
+  pitch: z.string().min(20).max(4000),
+  setupDescription: z.string().max(2000).optional(),
+  spaceNeeds: z.string().max(1000).optional(),
+  category: z.string().max(120).optional(),
+  powerNeeds: z.boolean().optional(),
+  waterNeeds: z.boolean().optional(),
+  createdByUserId: z.string().uuid().optional(),
+});
+export type ApplicationCreate = z.infer<typeof applicationCreateSchema>;
 
 export const networkInviteSchema = z.object({
   hostOrganizationId: z.string().uuid(),

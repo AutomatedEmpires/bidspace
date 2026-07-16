@@ -7,12 +7,16 @@ import { NotFoundError, ValidationError, fromDbError } from "./errors";
 export interface ThreadAnchor {
   context: MessageThreadContext;
   bidId?: string;
+  applicationId?: string;
   bookingId?: string;
   opportunityId?: string;
 }
 
 function anchorColumn(anchor: ThreadAnchor): { column: string; value: string } {
   if (anchor.context === "bid" && anchor.bidId) return { column: "bid_id", value: anchor.bidId };
+  if (anchor.context === "application" && anchor.applicationId) {
+    return { column: "application_id", value: anchor.applicationId };
+  }
   if (anchor.context === "booking" && anchor.bookingId) {
     return { column: "booking_id", value: anchor.bookingId };
   }
@@ -89,6 +93,13 @@ export interface ThreadWithContext extends MessageThreadRow {
     host_organization_id: string | null;
     opportunity_id: string;
   } | null;
+  application: {
+    id: string;
+    vendor_organization_id: string;
+    host_organization_id: string;
+    opportunity_id: string;
+    opportunity: { id: string; title: string } | null;
+  } | null;
   booking: {
     id: string;
     bidder_organization_id: string;
@@ -103,6 +114,12 @@ export function isThreadParty(thread: ThreadWithContext, organizationId: string)
     return (
       thread.bid.bidder_organization_id === organizationId ||
       thread.bid.host_organization_id === organizationId
+    );
+  }
+  if (thread.application) {
+    return (
+      thread.application.vendor_organization_id === organizationId ||
+      thread.application.host_organization_id === organizationId
     );
   }
   if (thread.booking) {
@@ -126,6 +143,7 @@ export async function listThreadsForOrg(
     .select(
       `*,
       bid:bids(id, bidder_organization_id, host_organization_id, opportunity_id),
+      application:applications(id, vendor_organization_id, host_organization_id, opportunity_id, opportunity:opportunities(id, title)),
       booking:bookings(id, bidder_organization_id, host_organization_id, inventory_unit_id),
       opportunity:opportunities(id, title, organization_id)`,
     )
@@ -146,6 +164,7 @@ export async function getThreadWithContext(
     .select(
       `*,
       bid:bids(id, bidder_organization_id, host_organization_id, opportunity_id),
+      application:applications(id, vendor_organization_id, host_organization_id, opportunity_id, opportunity:opportunities(id, title)),
       booking:bookings(id, bidder_organization_id, host_organization_id, inventory_unit_id),
       opportunity:opportunities(id, title, organization_id)`,
     )

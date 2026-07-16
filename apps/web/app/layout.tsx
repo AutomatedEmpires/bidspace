@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Fraunces, Instrument_Sans } from "next/font/google";
 import { getRequiredEnv } from "@/lib/env";
+import { MarketplacePhaseNotice } from "@/components/marketplace-phase-notice";
 import { AnalyticsProvider } from "./providers";
 import "./globals.css";
 
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · BidSpace",
   },
   description:
-    "BidSpace turns physical commercial access — vendor booths, market stalls, food-truck pads, kiosks, sponsor placements — into discoverable, biddable, bookable inventory.",
+    "BidSpace connects hosts offering temporary vendor spaces with vendors who bid, apply, and build repeat relationships.",
   openGraph: {
     siteName: "BidSpace",
     type: "website",
@@ -51,7 +52,10 @@ export default function RootLayout({
             Skip to content
           </a>
           <Suspense fallback={null}>
-            <AnalyticsProvider>{children}</AnalyticsProvider>
+            <AnalyticsProvider>
+              <MarketplacePhaseNotice />
+              {children}
+            </AnalyticsProvider>
           </Suspense>
         </body>
       </html>

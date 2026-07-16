@@ -31,8 +31,8 @@ const POINTS: { icon: IconName; title: string; body: string }[] = [
   },
   {
     icon: "booking",
-    title: "Operate without chaos",
-    body: "Once booked: exact access, setup windows, host contacts, and the recorded terms — in one place, on your phone.",
+    title: "Plan without chaos",
+    body: "When a host approves you for planning, keep setup windows, requirements, messages, and next steps in one contextual record.",
   },
   {
     icon: "repeat",
@@ -55,7 +55,7 @@ export default function ForVendorsPage() {
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/explore" className={buttonClasses("signal", "lg")}>
           <Icon name="explore" size={19} />
-          Explore open opportunities
+          Explore vendor spaces
         </Link>
         <Link href="/sign-up" className={buttonClasses("secondary", "lg")}>
           Build your business profile
@@ -78,8 +78,8 @@ export default function ForVendorsPage() {
           Discovery is never behind a paywall.
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-canvas-muted">
-          Browsing, fit, applying, and bidding are free for vendors. BidSpace earns a platform fee
-          when bookings complete — our incentive is your booked calendar.
+          Browsing, fit, applying, and bidding are free during the founder preview. Future host-side
+          fees require founder approval; no payments or fees are active now.
         </p>
       </div>
     </div>
