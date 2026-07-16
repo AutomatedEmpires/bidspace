@@ -9,7 +9,7 @@ import { tryGetDb } from "@/lib/safe-db";
 export const metadata: Metadata = {
   title: "BidSpace — Every space can become an opportunity",
   description:
-    "Turn physical commercial access into programmable inventory. Hosts publish booths, pads, kiosks, and placements; vendors discover, bid, and book.",
+    "Hosts publish temporary vendor spaces; vendors discover them, bid or apply, and build repeat relationships.",
 };
 
 export const revalidate = 300;
@@ -32,18 +32,18 @@ const HOST_STEPS: { icon: IconName; title: string; body: string }[] = [
   },
   {
     icon: "inventory",
-    title: "Many inventory units",
-    body: "Booth A12, the north food-truck pad, kiosk 3, the banner position. Each persists season after season.",
+    title: "Many reusable spaces",
+    body: "Booth A12, the north food-truck pad, kiosk 3, the banner placement. Reuse each one season after season.",
   },
   {
     icon: "opportunity",
-    title: "Released as opportunities",
-    body: "Publish dates, terms, and requirements. Fixed price, applications, or competitive bids — your call.",
+    title: "Released for vendors",
+    body: "Publish dates, traffic, terms, and requirements. Use bids, applications, invitations, approval, or a waitlist.",
   },
   {
-    icon: "booking",
-    title: "Managed to the booking",
-    body: "Review bidders, select, book, collect payment, and run the day — from one system.",
+    icon: "check",
+    title: "Curated placements",
+    body: "Compare the business behind each submission, shortlist, message, approve, decline, or waitlist.",
   },
 ];
 
@@ -69,13 +69,13 @@ export default async function HomePage() {
             </h1>
             <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-muted dark:text-canvas-muted">
               Vendor booths, food-truck pads, kiosks, parking rows, sponsor placements. BidSpace
-              turns the commercial capacity of real places into inventory that vendors can
-              discover, bid on, and book.
+              turns the commercial capacity of real places into spaces that vendors can
+              discover, bid on, or apply for.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/explore" className={buttonClasses("signal", "lg")}>
                 <Icon name="explore" size={20} />
-                Explore opportunities
+                Explore spaces
               </Link>
               <Link href="/for-hosts" className={buttonClasses("secondary", "lg")}>
                 <Icon name="venue" size={20} />
@@ -84,7 +84,7 @@ export default async function HomePage() {
             </div>
             <p className="mt-6 flex items-center gap-2 text-sm text-ink-muted dark:text-canvas-muted">
               <Icon name="shield" size={16} className="text-moss" />
-              Terms are recorded, payments are handled, history compounds.
+              Founder preview: no payments or binding placements are active.
             </p>
           </div>
           <div className="justify-self-center md:justify-self-end">
@@ -93,13 +93,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* LIVE SUPPLY */}
+      {/* PREVIEW SUPPLY */}
       {live.length > 0 ? (
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <p className="kicker mb-2">Live now</p>
-              <h2 className="font-display text-3xl font-semibold">Open opportunities</h2>
+              <p className="kicker mb-2">Marketplace preview</p>
+              <h2 className="font-display text-3xl font-semibold">Spaces accepting interest</h2>
             </div>
             <Link
               href="/explore"
@@ -121,7 +121,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <p className="kicker !text-canvas-muted mb-2">For hosts</p>
           <h2 className="max-w-2xl font-display text-3xl font-semibold leading-tight sm:text-4xl">
-            One location. Programmable inventory. Repeatable revenue.
+            One location. Reusable spaces. Stronger vendor relationships.
           </h2>
           <p className="mt-4 max-w-2xl text-canvas-muted">
             Stop rebuilding your vendor world every season in spreadsheets, PDFs, and inbox
@@ -145,7 +145,7 @@ export default async function HomePage() {
               See the host workspace
             </Link>
             <Link href="/sign-up" className={buttonClasses("secondary", "md", "!border-canvas/40 !text-canvas hover:!border-canvas hover:!bg-canvas/10")}>
-              Publish your first opportunity
+              Create your first space listing
             </Link>
           </div>
         </div>
@@ -221,11 +221,11 @@ export default async function HomePage() {
             Physical commercial access is inventory.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-ink-muted dark:text-canvas-muted">
-            BidSpace makes it discoverable, competitive, bookable, and repeatable.
+            BidSpace makes it discoverable, competitive, curated, and repeatable.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/explore" className={buttonClasses("signal", "lg")}>
-              Explore opportunities
+              Explore spaces
             </Link>
             <Link href="/for-hosts" className={buttonClasses("secondary", "lg")}>
               List commercial space

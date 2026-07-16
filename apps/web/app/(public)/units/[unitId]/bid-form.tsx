@@ -100,3 +100,70 @@ export function BidSubmissionForm(props: BidSubmissionFormProps) {
     </form>
   );
 }
+
+interface ApplicationSubmissionFormProps {
+  action: (state: BidFormState, formData: FormData) => Promise<BidFormState>;
+  canSubmit: boolean;
+  disabledReason?: string | null;
+}
+
+export function ApplicationSubmissionForm(props: ApplicationSubmissionFormProps) {
+  const [state, formAction, isPending] = useActionState(props.action, INITIAL_STATE);
+  const disabled = !props.canSubmit || isPending;
+
+  return (
+    <form action={formAction} className="grid gap-4">
+      <Field
+        label="Your pitch to the host"
+        htmlFor="application-pitch"
+        required
+        hint="Describe what you sell, who you serve, and why your business fits this space."
+      >
+        <Textarea id="application-pitch" name="pitch" rows={4} minLength={20} required disabled={disabled} />
+      </Field>
+      <Field label="Setup" htmlFor="application-setup" hint="Booth, trailer, table, signage, and load-in details.">
+        <Textarea id="application-setup" name="setupDescription" rows={3} disabled={disabled} />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Category" htmlFor="application-category">
+          <Input id="application-category" name="category" placeholder="Food, retail, services…" disabled={disabled} />
+        </Field>
+        <Field label="Space needs" htmlFor="application-space-needs">
+          <Input id="application-space-needs" name="spaceNeeds" placeholder="10×10, trailer access…" disabled={disabled} />
+        </Field>
+      </div>
+      <div className="flex flex-wrap gap-5 text-sm">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" name="powerNeeds" className="size-4 accent-signal" disabled={disabled} />
+          I need power
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" name="waterNeeds" className="size-4 accent-signal" disabled={disabled} />
+          I need water
+        </label>
+      </div>
+      <Button type="submit" variant="signal" size="lg" disabled={disabled}>
+        <Icon name="send" size={18} />
+        {isPending ? "Submitting…" : "Submit application"}
+      </Button>
+      {!props.canSubmit && props.disabledReason ? (
+        <p role="status" className="flex items-start gap-2 text-sm font-medium text-signal-deep dark:text-signal-bright">
+          <Icon name="warning" size={16} className="mt-0.5 shrink-0" />
+          {props.disabledReason}
+        </p>
+      ) : null}
+      {state.message ? (
+        <p
+          role="status"
+          className={
+            state.status === "error"
+              ? "text-sm font-medium text-alert dark:text-alert-bright"
+              : "text-sm font-medium text-moss dark:text-moss-bright"
+          }
+        >
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
+}

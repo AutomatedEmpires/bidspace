@@ -13,6 +13,9 @@ export type MarketplaceEvent =
   | "opportunity_duplicated"
   | "bid_submitted"
   | "bid_awarded"
+  | "bid_selected_preview"
+  | "application_submitted"
+  | "application_reviewed"
   | "booking_paid"
   | "review_submitted"
   | "network_invited";

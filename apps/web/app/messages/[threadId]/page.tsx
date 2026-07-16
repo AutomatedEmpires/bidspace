@@ -64,7 +64,7 @@ export default async function ThreadPage({
     <div className="grid gap-6">
       <PageHeader
         kicker={`${thread.context} conversation`}
-        title={thread.opportunity?.title ?? "Conversation"}
+        title={thread.opportunity?.title ?? thread.application?.opportunity?.title ?? "Conversation"}
       />
 
       <Panel>

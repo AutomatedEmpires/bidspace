@@ -3,7 +3,7 @@
 The authoritative schema lives in [`packages/db/migrations`](../packages/db/migrations). This doc is the map.
 
 ## Core objects
-User, Organization, Organization Membership, Role Profile, Venue, Venue Zone, Event, Inventory Collection, Opportunity, **Inventory Unit**, Bid, Bid Preference, Booking, Payment, Review, Message, Verification, Document, Performance Data, Admin Action.
+User, Organization, Organization Membership, Role Profile, Venue, Venue Zone, Event, Inventory Collection, Opportunity, **Inventory Unit / Space**, Bid, **Application**, Invitation, Message Thread, Bid Preference, dormant Booking/Payment records, Review, Verification, Document, Performance Data, Admin Action.
 
 ## Ownership & hierarchy
 - Organization owns/operates Venues, Events, Opportunities, Inventory Units, Bids, Bookings.
@@ -12,6 +12,10 @@ User, Organization, Organization Membership, Role Profile, Venue, Venue Zone, Ev
 - Bid targets an Inventory Unit, an Opportunity, or ranked preferences (`bid_preferences`).
 - Booking = accepted + paid Bid locking one Inventory Unit for a time window.
 - Performance Data is first-class from day one (the moat).
+- Opportunity `allocation_mode` selects bid, application, invite-only, fixed-fee, host-approval, or waitlist intake.
+- Applications are amount-free and carry pitch, setup, space, power, and water needs through a host-curated review status.
+- Role profile `profile_details` holds vendor setup, utility, service-area, availability, prior-event, social-link, and reusable host-pitch fields.
+- FeePlan remains a typed dormant/test concept; no live fee or payment row is created by the founder-preview flow.
 
 ## Enum dictionary
 Defined in `0002_enums.sql`. Highlights:

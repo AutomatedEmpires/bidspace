@@ -25,14 +25,14 @@ const CAPABILITIES: { icon: IconName; title: string; body: string }[] = [
     body: "Fixed price, applications, sealed competitive bids, direct offers, invitation-only. You choose the allocation mode; the highest number never auto-wins.",
   },
   {
-    icon: "money",
-    title: "Money handled properly",
-    body: "Vendors pay through BidSpace; Stripe routes your payout automatically. Accepted terms are snapshotted on every booking — no he-said-she-said.",
+    icon: "shield",
+    title: "Founder-gated commitments",
+    body: "Preview decisions are recorded for product testing, while payments and binding placements remain disabled until separately approved.",
   },
   {
     icon: "command",
     title: "A command center, not a dashboard",
-    body: "Your home screen answers one question: what needs my decision? Bids waiting, deadlines closing, payments in flight.",
+    body: "Your home screen answers one question: what needs my decision? Bids and applications waiting, invitations open, deadlines closing.",
   },
   {
     icon: "calendar",
@@ -55,7 +55,7 @@ export default function ForHostsPage() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/sign-up" className={buttonClasses("signal", "lg")}>
-          Publish your first opportunity
+          Create your first space listing
         </Link>
         <Link href="/how-it-works" className={buttonClasses("secondary", "lg")}>
           See the full loop
@@ -77,7 +77,7 @@ export default function ForHostsPage() {
       <div className="plan-grid mt-16 rounded-[4px] border border-line p-8 sm:p-10">
         <p className="kicker mb-2">The activation moment</p>
         <h2 className="max-w-xl font-display text-2xl font-semibold">
-          Organization → location → inventory unit → opportunity → published.
+          Host → venue or event → reusable space → dated listing → vendor submissions.
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-muted dark:text-canvas-muted">
           No enterprise configuration before you understand the product. Add one location, define

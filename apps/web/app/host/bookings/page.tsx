@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
-import { formatMoney, hostPayoutCents } from "@bidspace/core";
+import { formatMoney } from "@bidspace/core";
 import {
   ServiceError,
   getBooking,
@@ -120,8 +120,8 @@ export default async function HostBookingsPage() {
     <div className="grid gap-8">
       <PageHeader
         kicker="Bookings"
-        title="Confirmed commitments"
-        lede="Each booking preserves the accepted terms. Move them through the day-of lifecycle as it happens."
+        title="Legacy placement fixtures"
+        lede="Existing test bookings are retained for workflow design. New host selections do not create a booking, payment, payout, or binding commitment."
       />
 
       {bookings.length > 0 ? (
@@ -131,7 +131,7 @@ export default async function HostBookingsPage() {
               <TH>Vendor</TH>
               <TH>Position</TH>
               <TH>Dates</TH>
-              <TH className="text-right">Price / your payout</TH>
+              <TH className="text-right">Test amount</TH>
               <TH>Status</TH>
               <TH />
             </tr>
@@ -146,9 +146,6 @@ export default async function HostBookingsPage() {
                   <TD>{formatDateRange(booking.starts_at, booking.ends_at)}</TD>
                   <TD className="text-right tabular-nums">
                     <span className="font-semibold">{formatMoney(booking.price_cents)}</span>
-                    <span className="block text-xs font-medium text-moss dark:text-moss-bright">
-                      nets {formatMoney(hostPayoutCents(booking.price_cents))}
-                    </span>
                   </TD>
                   <TD>
                     <StatusBadge status={booking.status} />
@@ -189,8 +186,8 @@ export default async function HostBookingsPage() {
       ) : (
         <EmptyState
           icon="booking"
-          title="No bookings yet"
-          body="Award a bid and the booking appears here the moment payment is requested."
+          title="No legacy booking fixtures"
+          body="Founder-preview bid and application decisions stop at placement planning. Payment-backed bookings remain disabled."
         />
       )}
 

@@ -17,7 +17,7 @@ const PRICING_LABEL: Record<string, string> = {
   fixed: "Fixed price",
   minimum_bid: "Minimum bid",
   competitive_bid: "Competitive bid",
-  hybrid: "Bid or book",
+  hybrid: "Bid or host approval",
 };
 
 export function opportunityHref(opportunity: Pick<PublicOpportunity, "id" | "slug">): string {
@@ -65,7 +65,7 @@ export function OpportunityCard({
         {opportunity.status === "receiving_bids" ? (
           <span className="absolute left-3 top-3">
             <Badge tone="active" className="bg-surface/95 dark:bg-ink/90">
-              Receiving bids
+              Accepting submissions
             </Badge>
           </span>
         ) : null}
@@ -108,9 +108,11 @@ export function OpportunityCard({
           ) : null}
           <div className="flex items-baseline justify-between gap-2">
             <p className="font-semibold tabular-nums">
-              {opportunity.minimum_bid_cents != null
-                ? `From ${formatMoney(opportunity.minimum_bid_cents)}`
-                : PRICING_LABEL[opportunity.pricing_mode]}
+              {opportunity.allocation_mode !== "bid"
+                ? opportunity.allocation_mode.replace(/_/g, " ")
+                : opportunity.minimum_bid_cents != null
+                  ? `From ${formatMoney(opportunity.minimum_bid_cents)}`
+                  : PRICING_LABEL[opportunity.pricing_mode]}
             </p>
             {deadline ? (
               <p

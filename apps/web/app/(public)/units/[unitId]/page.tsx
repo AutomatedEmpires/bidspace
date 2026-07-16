@@ -10,7 +10,9 @@ import {
   getOpportunity,
   listBidsForOpportunity,
   listDocumentsForOrganization,
+  listApplicationsForVendorOrg,
   placeBid,
+  placeApplication,
 } from "@bidspace/services";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -34,7 +36,11 @@ import { hasMarketplaceRole, hasOrgRole } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import { captureServerEvent } from "@/lib/analytics-server";
 import { FitPanel } from "@/components/fit-panel";
-import { BidSubmissionForm, type BidFormState } from "./bid-form";
+import {
+  ApplicationSubmissionForm,
+  BidSubmissionForm,
+  type BidFormState,
+} from "./bid-form";
 
 type ActiveOrgContext = NonNullable<Awaited<ReturnType<typeof getCurrentUserOrgContext>>> & {
   activeClerkOrganizationId: string;
@@ -119,18 +125,33 @@ export default async function UnitDetailPage({
     notFound();
   }
   const { venue, event } = await getUnitContext(unit.venue_id, unit.event_id, opportunity);
+  const applicationMode = opportunity.allocation_mode !== "bid";
   const minimumBidCents = unit.minimum_bid_cents ?? opportunity.minimum_bid_cents;
-  const bidAvailabilityError =
+  const placementAvailabilityError =
     getBidderRoleError(context.roleProfiles) ??
-    getBidAvailabilityError(opportunity.status, minimumBidCents, unit.status);
-  const yourBids = (
-    await listBidsForOpportunity(db, opportunity.id, {
-      organizationId: context.activeDbOrganizationId,
-      isHost: false,
-    })
-  )
-    .filter((bid) => bid.inventory_unit_id === unit.id)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    (applicationMode
+      ? !["published", "receiving_bids"].includes(opportunity.status) ||
+        !["available", "receiving_bids", "shortlisted"].includes(unit.status)
+        ? "This space is not accepting applications right now."
+        : null
+      : getBidAvailabilityError(opportunity.status, minimumBidCents, unit.status));
+  const [yourBids, yourApplications] = await Promise.all([
+    applicationMode
+      ? Promise.resolve([])
+      : listBidsForOpportunity(db, opportunity.id, {
+          organizationId: context.activeDbOrganizationId,
+          isHost: false,
+        }).then((bids) =>
+          bids
+            .filter((bid) => bid.inventory_unit_id === unit.id)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        ),
+    applicationMode
+      ? listApplicationsForVendorOrg(db, context.activeDbOrganizationId).then((applications) =>
+          applications.filter((application) => application.inventory_unit_id === unit.id),
+        )
+      : Promise.resolve([]),
+  ]);
 
   async function submitBidAction(_state: BidFormState, formData: FormData): Promise<BidFormState> {
     "use server";
@@ -148,6 +169,9 @@ export default async function UnitDetailPage({
       // Re-enforce visibility on the action itself — server actions are POST
       // endpoints, invokable without ever loading the (guarded) page.
       const currentOpportunity = await getOpportunity(serverDb, currentUnit.opportunity_id);
+      if (currentOpportunity.allocation_mode !== "bid") {
+        return { status: "error", message: "This space is accepting applications, not bids." };
+      }
       if (
         !(await canOrgViewOpportunity(
           serverDb,
@@ -188,6 +212,55 @@ export default async function UnitDetailPage({
         return { status: "error", message: error.message };
       }
       return { status: "error", message: "Unable to submit bid right now. Please try again." };
+    }
+  }
+
+  async function submitApplicationAction(
+    _state: BidFormState,
+    formData: FormData,
+  ): Promise<BidFormState> {
+    "use server";
+    const currentContext = await requireActiveOrgContext();
+    try {
+      const bidderRoleError = getBidderRoleError(currentContext.roleProfiles);
+      if (bidderRoleError) return { status: "error", message: bidderRoleError };
+      const serverDb = createServerBidspaceClient();
+      const currentUnit = await getInventoryUnit(serverDb, unitId);
+      const currentOpportunity = await getOpportunity(serverDb, currentUnit.opportunity_id);
+      if (
+        !(await canOrgViewOpportunity(
+          serverDb,
+          currentOpportunity,
+          currentContext.activeDbOrganizationId,
+        ))
+      ) {
+        return { status: "error", message: "This space is not open to your organization." };
+      }
+      const application = await placeApplication(serverDb, {
+        vendorOrganizationId: currentContext.activeDbOrganizationId,
+        opportunityId: currentOpportunity.id,
+        inventoryUnitId: currentUnit.id,
+        pitch: String(formData.get("pitch") ?? "").trim(),
+        setupDescription: String(formData.get("setupDescription") ?? "").trim() || undefined,
+        spaceNeeds: String(formData.get("spaceNeeds") ?? "").trim() || undefined,
+        category: String(formData.get("category") ?? "").trim() || undefined,
+        powerNeeds: formData.get("powerNeeds") === "on",
+        waterNeeds: formData.get("waterNeeds") === "on",
+        createdByUserId: currentContext.dbUserId ?? undefined,
+      });
+      captureServerEvent("application_submitted", currentContext.activeDbOrganizationId, {
+        application_id: application.id,
+        opportunity_id: application.opportunity_id,
+        inventory_unit_id: application.inventory_unit_id,
+      });
+      revalidatePath(`/units/${unitId}`);
+      return {
+        status: "success",
+        message: "Application submitted. The host can review, shortlist, message, approve, decline, or waitlist it.",
+      };
+    } catch (error) {
+      if (error instanceof ValidationError) return { status: "error", message: error.message };
+      return { status: "error", message: "Unable to submit the application right now." };
     }
   }
 
@@ -301,8 +374,9 @@ export default async function UnitDetailPage({
             <DescriptionList
               className="mt-4"
               items={[
-                { term: "Minimum bid", detail: minimumBidCents != null ? formatMoney(minimumBidCents) : "Not set" },
-                { term: "Buy now", detail: unit.buy_now_price_cents != null ? formatMoney(unit.buy_now_price_cents) : null },
+                { term: "Placement method", detail: opportunity.allocation_mode.replace(/_/g, " ") },
+                { term: "Minimum bid", detail: !applicationMode && minimumBidCents != null ? formatMoney(minimumBidCents) : null },
+                { term: applicationMode ? "Future host fee" : "Buy now", detail: unit.buy_now_price_cents != null ? formatMoney(unit.buy_now_price_cents) : null },
                 { term: "Pricing mode", detail: opportunity.pricing_mode.replace(/_/g, " ") },
                 { term: "Opportunity", detail: `${opportunity.title} (${opportunity.status.replace(/_/g, " ")})` },
               ]}
@@ -310,10 +384,12 @@ export default async function UnitDetailPage({
           </section>
 
           <section className="mt-8">
-            <h2 className="font-display text-xl font-semibold">Your bids on this position</h2>
-            {yourBids.length === 0 ? (
+            <h2 className="font-display text-xl font-semibold">
+              Your {applicationMode ? "applications" : "bids"} for this space
+            </h2>
+            {yourBids.length === 0 && yourApplications.length === 0 ? (
               <p className="mt-3 text-sm text-ink-muted dark:text-canvas-muted">
-                You have not placed a bid for this position yet.
+                You have not submitted {applicationMode ? "an application" : "a bid"} for this space yet.
               </p>
             ) : (
               <ul className="mt-3 grid gap-2">
@@ -329,6 +405,18 @@ export default async function UnitDetailPage({
                     </span>
                   </li>
                 ))}
+                {yourApplications.map((application) => (
+                  <li
+                    key={application.id}
+                    className="flex items-center justify-between gap-3 rounded-[3px] border border-line bg-surface px-4 py-3 text-sm dark:bg-surface-dark"
+                  >
+                    <span className="line-clamp-1 font-medium">{application.pitch}</span>
+                    <StatusBadge status={application.status} />
+                    <span className="text-xs text-ink-muted dark:text-canvas-muted">
+                      {formatDateTime(application.created_at)}
+                    </span>
+                  </li>
+                ))}
               </ul>
             )}
           </section>
@@ -337,10 +425,10 @@ export default async function UnitDetailPage({
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Panel>
             <PanelHeader
-              kicker="Sealed bidding"
-              title="Place your bid"
+              kicker={applicationMode ? "Host-reviewed application" : "Sealed bidding"}
+              title={applicationMode ? "Apply for this space" : "Place your bid"}
               actions={
-                minimumBidCents != null ? (
+                !applicationMode && minimumBidCents != null ? (
                   <span className="font-display text-lg font-semibold tabular-nums">
                     {formatMoney(minimumBidCents)}+
                   </span>
@@ -348,20 +436,28 @@ export default async function UnitDetailPage({
               }
             />
             <PanelBody>
-              <BidSubmissionForm
-                action={submitBidAction}
-                canSubmit={!bidAvailabilityError}
-                disabledReason={bidAvailabilityError}
-                minimumBidCents={minimumBidCents ?? DEFAULT_MINIMUM_BID_CENTS}
-                commerceLayers={COMMERCE_LAYER}
-              />
+              {applicationMode ? (
+                <ApplicationSubmissionForm
+                  action={submitApplicationAction}
+                  canSubmit={!placementAvailabilityError}
+                  disabledReason={placementAvailabilityError}
+                />
+              ) : (
+                <BidSubmissionForm
+                  action={submitBidAction}
+                  canSubmit={!placementAvailabilityError}
+                  disabledReason={placementAvailabilityError}
+                  minimumBidCents={minimumBidCents ?? DEFAULT_MINIMUM_BID_CENTS}
+                  commerceLayers={COMMERCE_LAYER}
+                />
+              )}
             </PanelBody>
           </Panel>
           {fitReport ? <FitPanel report={fitReport} className="mt-4" /> : null}
           <p className="mt-3 flex items-start gap-2 text-xs text-ink-muted dark:text-canvas-muted">
             <Icon name="shield" size={14} className="mt-0.5 shrink-0 text-moss" />
-            The host selects on fit, not just price. Accepted terms are recorded on the booking and
-            payment is handled through BidSpace.
+            The host selects on fit, not just price. This founder preview records decisions for
+            testing only; no payment or binding placement is created.
           </p>
         </aside>
       </div>

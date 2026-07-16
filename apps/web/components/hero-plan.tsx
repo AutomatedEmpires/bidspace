@@ -1,5 +1,5 @@
 // The homepage hero scene: a surveyed venue plan whose commercial positions
-// reveal themselves and resolve into live marketplace state. Pure SVG + CSS
+// reveal themselves and resolve into marketplace-preview state. Pure SVG + CSS
 // keyframes — no animation library, honours prefers-reduced-motion globally.
 
 const UNITS: {
@@ -8,15 +8,15 @@ const UNITS: {
   w: number;
   h: number;
   delay: number;
-  state: "open" | "bidding" | "booked";
+  state: "open" | "bidding" | "selected";
 }[] = [
-  { x: 70, y: 78, w: 52, h: 40, delay: 0.2, state: "booked" },
+  { x: 70, y: 78, w: 52, h: 40, delay: 0.2, state: "selected" },
   { x: 130, y: 78, w: 52, h: 40, delay: 0.45, state: "bidding" },
   { x: 190, y: 78, w: 52, h: 40, delay: 0.7, state: "open" },
   { x: 250, y: 78, w: 52, h: 40, delay: 0.95, state: "open" },
   { x: 70, y: 196, w: 52, h: 40, delay: 0.55, state: "bidding" },
   { x: 130, y: 196, w: 52, h: 40, delay: 0.8, state: "open" },
-  { x: 190, y: 196, w: 52, h: 40, delay: 1.05, state: "booked" },
+  { x: 190, y: 196, w: 52, h: 40, delay: 1.05, state: "selected" },
   { x: 250, y: 196, w: 52, h: 40, delay: 1.2, state: "open" },
   { x: 336, y: 96, w: 44, h: 62, delay: 1.0, state: "bidding" },
   { x: 336, y: 172, w: 44, h: 62, delay: 1.3, state: "open" },
@@ -25,7 +25,7 @@ const UNITS: {
 const STATE_STYLE: Record<string, { fill: string; stroke: string; label: string }> = {
   open: { fill: "rgba(36,80,126,0.10)", stroke: "#24507e", label: "Open" },
   bidding: { fill: "rgba(198,61,18,0.12)", stroke: "#c63d12", label: "Bids" },
-  booked: { fill: "rgba(47,107,79,0.12)", stroke: "#2f6b4f", label: "Booked" },
+  selected: { fill: "rgba(47,107,79,0.12)", stroke: "#2f6b4f", label: "Selected" },
 };
 
 export function HeroPlan() {
@@ -34,7 +34,7 @@ export function HeroPlan() {
       <svg
         viewBox="0 0 440 300"
         role="img"
-        aria-label="A venue site plan where commercial positions become open, bidding, and booked marketplace inventory"
+        aria-label="A venue site plan where vendor spaces become open, accept bids, and move into placement planning"
         className="w-full max-w-xl"
       >
         <style>{`
@@ -81,7 +81,7 @@ export function HeroPlan() {
           </text>
         </g>
 
-        {/* Inventory units */}
+        {/* Reusable vendor spaces */}
         {UNITS.map((unit, i) => {
           const style = STATE_STYLE[unit.state]!;
           return (

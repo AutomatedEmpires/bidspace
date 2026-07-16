@@ -48,3 +48,9 @@ test("statusTone falls back to neutral for unknown vocab", () => {
 test("statusLabel humanizes underscores", () => {
   assert.equal(statusLabel("payment_pending"), "payment pending");
 });
+
+test("application review statuses use placement semantics", () => {
+  assert.equal(statusTone("under_review"), "attention");
+  assert.equal(statusTone("approved"), "positive");
+  assert.equal(statusTone("declined"), "negative");
+});

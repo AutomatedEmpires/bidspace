@@ -1,14 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { formatMoney } from "@bidspace/core";
 import {
   ServiceError,
+  getApplication,
   getBid,
+  getOrCreateThread,
+  listApplicationsForVendorOrg,
   listBidsForBidderOrg,
+  transitionApplication,
   transitionBid,
   withdrawBid,
   type BidWithContext,
+  type ApplicationWithContext,
 } from "@bidspace/services";
 import {
   Button,
@@ -24,7 +30,7 @@ import { requireVendorContext } from "@/lib/org-context";
 import { tryGetDb } from "@/lib/safe-db";
 import { formatDateTime } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Bids" };
+export const metadata: Metadata = { title: "Bids & applications" };
 export const dynamic = "force-dynamic";
 
 const ACTIVE_STATUSES = [
@@ -36,6 +42,51 @@ const ACTIVE_STATUSES = [
   "accepted",
   "payment_pending",
 ];
+
+const ACTIVE_APPLICATION_STATUSES = ["submitted", "under_review", "shortlisted", "waitlisted", "approved"];
+
+function ApplicationRowCard({
+  application,
+  onWithdraw,
+  onMessage,
+}: {
+  application: ApplicationWithContext;
+  onWithdraw: (formData: FormData) => Promise<void>;
+  onMessage: (formData: FormData) => Promise<void>;
+}) {
+  const canWithdraw = ["submitted", "under_review", "shortlisted", "waitlisted"].includes(application.status);
+  return (
+    <Panel>
+      <PanelBody className="grid gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <Link href={`/opportunities/${application.opportunity?.slug ?? application.opportunity_id}`} className="font-display font-semibold hover:underline">
+              {application.opportunity?.title ?? "Space listing"}
+            </Link>
+            {application.inventory_unit ? <p className="text-sm text-ink-muted dark:text-canvas-muted">{application.inventory_unit.name}</p> : null}
+          </div>
+          <StatusBadge status={application.status} />
+        </div>
+        <p className="text-sm leading-relaxed">{application.pitch}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+          <p className="text-xs text-ink-muted dark:text-canvas-muted">Applied {formatDateTime(application.created_at)}</p>
+          {canWithdraw ? (
+            <form action={onWithdraw}>
+              <input type="hidden" name="applicationId" value={application.id} />
+              <Button type="submit" variant="ghost" size="sm">Withdraw application</Button>
+            </form>
+          ) : null}
+          <form action={onMessage}>
+            <input type="hidden" name="applicationId" value={application.id} />
+            <Button type="submit" variant="secondary" size="sm">
+              <Icon name="message" size={15} /> Message host
+            </Button>
+          </form>
+        </div>
+      </PanelBody>
+    </Panel>
+  );
+}
 
 function BidRowCard({
   bid,
@@ -105,7 +156,7 @@ function BidRowCard({
             {bid.status === "payment_pending" ? (
               <Link href="/bookings" className={buttonClasses("primary", "sm")}>
                 <Icon name="money" size={15} />
-                Go to booking & payment
+                Open legacy placement preview
               </Link>
             ) : null}
           </div>
@@ -122,9 +173,42 @@ export default async function VendorBidsPage() {
     return <EmptyState icon="warning" title="Marketplace data is not connected" />;
   }
 
-  const bids = await listBidsForBidderOrg(db, context.activeDbOrganizationId);
+  const [bids, applications] = await Promise.all([
+    listBidsForBidderOrg(db, context.activeDbOrganizationId),
+    listApplicationsForVendorOrg(db, context.activeDbOrganizationId),
+  ]);
   const active = bids.filter((b) => ACTIVE_STATUSES.includes(b.status));
   const settled = bids.filter((b) => !ACTIVE_STATUSES.includes(b.status));
+  const activeApplications = applications.filter((application) => ACTIVE_APPLICATION_STATUSES.includes(application.status));
+  const settledApplications = applications.filter((application) => !ACTIVE_APPLICATION_STATUSES.includes(application.status));
+
+  async function withdrawApplicationAction(formData: FormData) {
+    "use server";
+    const current = await requireVendorContext();
+    const serverDb = tryGetDb();
+    if (!serverDb) return;
+    const applicationId = String(formData.get("applicationId") ?? "");
+    try {
+      const application = await getApplication(serverDb, applicationId);
+      if (application.vendor_organization_id !== current.activeDbOrganizationId) return;
+      await transitionApplication(serverDb, applicationId, "withdrawn");
+    } catch (error) {
+      if (!(error instanceof ServiceError)) throw error;
+    }
+    revalidatePath("/bids");
+  }
+
+  async function messageApplicationAction(formData: FormData) {
+    "use server";
+    const current = await requireVendorContext();
+    const serverDb = tryGetDb();
+    if (!serverDb) return;
+    const applicationId = String(formData.get("applicationId") ?? "");
+    const application = await getApplication(serverDb, applicationId);
+    if (application.vendor_organization_id !== current.activeDbOrganizationId) return;
+    const thread = await getOrCreateThread(serverDb, { context: "application", applicationId });
+    redirect(`/messages/${thread.id}`);
+  }
 
   async function withdrawAction(formData: FormData) {
     "use server";
@@ -163,10 +247,23 @@ export default async function VendorBidsPage() {
   return (
     <div className="grid gap-10">
       <PageHeader
-        kicker="Bids"
-        title="Your offers in play"
-        lede="Sealed bids: hosts see your offer and your business, competitors never do."
+        kicker="Submissions"
+        title="Your bids and applications"
+        lede="Track every pitch to a host. Sealed bid amounts stay private; applications focus on fit and setup. Preview selections do not create payment or a binding placement."
       />
+
+      <section>
+        <h2 className="font-display text-xl font-semibold">Active applications ({activeApplications.length})</h2>
+        {activeApplications.length > 0 ? (
+          <div className="mt-4 grid gap-3">
+            {activeApplications.map((application) => (
+              <ApplicationRowCard key={application.id} application={application} onWithdraw={withdrawApplicationAction} onMessage={messageApplicationAction} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-ink-muted dark:text-canvas-muted">No applications are in host review.</p>
+        )}
+      </section>
 
       <section>
         <h2 className="font-display text-xl font-semibold">Active ({active.length})</h2>
@@ -197,6 +294,17 @@ export default async function VendorBidsPage() {
           <div className="mt-4 grid gap-3">
             {settled.map((bid) => (
               <BidRowCard key={bid.id} bid={bid} onWithdraw={withdrawAction} onAcceptCounter={acceptCounterAction} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {settledApplications.length > 0 ? (
+        <section>
+          <h2 className="font-display text-xl font-semibold">Application history ({settledApplications.length})</h2>
+          <div className="mt-4 grid gap-3">
+            {settledApplications.map((application) => (
+              <ApplicationRowCard key={application.id} application={application} onWithdraw={withdrawApplicationAction} onMessage={messageApplicationAction} />
             ))}
           </div>
         </section>
